@@ -1,0 +1,133 @@
+import { prisma } from "@/libs/prisma";
+import { NextResponse } from "next/server";
+import { requireAdmin } from "@/libs/api-auth";
+import { z } from "zod";
+
+const updateUjianSchema = z.object({
+  title: z.string().trim().min(1, "Judul wajib diisi").max(200),
+  description: z.string().trim().max(2000).optional().nullable(),
+  price: z.coerce.number().int().min(0).default(0),
+  programId: z.string().min(1, "Program wajib dipilih"),
+  questionBankId: z.string().min(1, "Bank soal wajib dipilih"),
+  timeType: z.enum(["SINGLE", "PER_SECTION"]),
+  totalTime: z.coerce.number().int().min(0).optional().nullable(),
+  listeningTime: z.coerce.number().int().min(0).optional().nullable(),
+  structureTime: z.coerce.number().int().min(0).optional().nullable(),
+  readingTime: z.coerce.number().int().min(0).optional().nullable(),
+  shuffleQuestions: z.boolean().default(false),
+  shuffleAnswers: z.boolean().default(false),
+  showAnswer: z.boolean().default(false),
+  showNavigation: z.boolean().default(true),
+  showQuestionNumber: z.boolean().default(true),
+  autoNextQuestion: z.boolean().default(false),
+  showPrevNextButton: z.boolean().default(true),
+  questionDisplayType: z.enum(["OPTION", "INLINE"]).default("OPTION"),
+  maxExitAttempts: z.coerce.number().int().min(0).default(0),
+  passingScore: z.coerce.number().int().min(0).max(1000).default(450),
+});
+
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  // 🔥 AUTH — hanya ADMIN
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  try {
+    const data = await prisma.ujian.findUnique({
+      where: { id: params.id },
+      include: {
+        program: true,
+        questionBank: true,
+      },
+    });
+
+    if (!data) {
+      return NextResponse.json(
+        { error: "Data tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      { error: "Gagal ambil data" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  try {
+    const body = await req.json();
+    const validated = updateUjianSchema.safeParse(body);
+
+    if (!validated.success) {
+      return NextResponse.json(
+        { error: validated.error.issues[0]?.message || "Input tidak valid" },
+        { status: 400 }
+      );
+    }
+
+    const existing = await prisma.ujian.findUnique({ where: { id: params.id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Ujian tidak ditemukan" }, { status: 404 });
+    }
+
+    const updated = await prisma.ujian.update({
+      where: { id: params.id },
+      data: validated.data,
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("UPDATE UJIAN ERROR:", error);
+    return NextResponse.json({ error: "Gagal update" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  try {
+    const existing = await prisma.ujian.findUnique({ where: { id: params.id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Ujian tidak ditemukan" }, { status: 404 });
+    }
+
+    // 🔥 CEK APAKAH SUDAH ADA TRANSAKSI/SESSION
+    const hasTransaction = await prisma.transaction.findFirst({
+      where: { ujianId: params.id },
+    });
+    const hasSession = await prisma.examSession.findFirst({
+      where: { ujianId: params.id },
+    });
+
+    if (hasTransaction || hasSession) {
+      return NextResponse.json(
+        { error: "Ujian ini sudah memiliki transaksi/peserta, tidak dapat dihapus" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.ujian.delete({ where: { id: params.id } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE UJIAN ERROR:", error);
+    return NextResponse.json({ error: "Gagal hapus" }, { status: 500 });
+  }
+}

@@ -1,0 +1,370 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id            String           @id @default(cuid())
+  name          String?
+  email         String?          @unique
+  emailVerified DateTime?        @map("email_verified")
+  image         String?
+  password      String?
+  role          String           @default("USER")
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  phone         String?
+  siswa         Siswa?
+  auditLogs     AuditLog[]
+  examSessions  ExamSession[]
+  transactions  Transaction[]
+  examAccesses  UserExamAccess[]
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("users")
+}
+
+model Siswa {
+  id String @id @default(cuid())
+
+  name     String?
+  phone    String?
+  address  String?
+  gender   String?
+  province String?
+  city     String?
+  district String?
+  village  String?
+
+  isMember Boolean @default(false)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Program {
+  id          String   @id @default(cuid())
+  name        String
+  image       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  exams       Exam[]
+  ujians      Ujian[]
+}
+
+model CategoryScore {
+  id        String         @id @default(cuid())
+  program   String
+  name      String
+  createdAt DateTime       @default(now())
+  sectionId String
+  section   Section        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  questions Question[]
+  mappings  ScoreMapping[]
+}
+
+model ScoreMapping {
+  id         String        @id @default(cuid())
+  minScore   Int
+  maxScore   Int
+  finalScore Int
+  categoryId String
+  category   CategoryScore @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}
+
+model Exam {
+  id               String     @id @default(cuid())
+  title            String
+  categoryId       String
+  totalOption      Int
+  totalSession     Int
+  useCategoryScore Boolean    @default(true)
+  scoringType      String     @default("PER_KATEGORI")
+  showCorrection   Boolean    @default(false)
+  minScoreToShow   Int?
+  createdAt        DateTime   @default(now())
+  category         Program    @relation(fields: [categoryId], references: [id])
+  questions        Question[]
+  sections         Section[]
+  ujians           Ujian[]
+}
+
+model Ujian {
+  id                  String           @id @default(cuid())
+  title               String
+  description         String?
+  price               Int              @default(0)
+  programId           String
+  questionBankId      String
+  timeType            String           @default("SINGLE")
+  totalTime           Int?
+  listeningTime       Int?
+  structureTime       Int?
+  readingTime         Int?
+  shuffleQuestions    Boolean          @default(false)
+  shuffleAnswers      Boolean          @default(false)
+  showAnswer          Boolean          @default(false)
+  showNavigation      Boolean          @default(true)
+  showQuestionNumber  Boolean          @default(true)
+  autoNextQuestion    Boolean          @default(false)
+  showPrevNextButton  Boolean          @default(true)
+  questionDisplayType String           @default("OPTION")
+  maxExitAttempts     Int              @default(0)
+  createdAt           DateTime         @default(now())
+  passingScore        Int              @default(450)
+  examSessions        ExamSession[]
+  transactions        Transaction[]
+  program             Program          @relation(fields: [programId], references: [id])
+  questionBank        Exam             @relation(fields: [questionBankId], references: [id])
+  accesses            UserExamAccess[]
+}
+
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  label      String
+  text       String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model Section {
+  id            String          @id @default(cuid())
+  examId        String?
+  title         String
+  direction     String?
+  order         Int
+  createdAt     DateTime        @default(now())
+  CategoryScore CategoryScore[]
+  questions     Question[]
+  exam          Exam?           @relation(fields: [examId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id                  String                @id @default(cuid())
+  examId              String
+  type                String
+  questionText        String?
+  directionText       String?
+  categoryPenilaianId String?
+  audioUrl            String?
+  audioPlayLimit      Int?
+  timeLimit           Int?
+  correctAnswer       String?
+  explanation         String?
+  createdAt           DateTime              @default(now())
+  order               Int
+  imageUrl            String?
+  sectionId           String?
+  examAnswers         ExamAnswer[]
+  examAudio           ExamAudioTrack[]
+  examQuestions       ExamSessionQuestion[]
+  categoryPenilaian   CategoryScore?        @relation(fields: [categoryPenilaianId], references: [id])
+  exam                Exam                  @relation(fields: [examId], references: [id])
+  section             Section?              @relation(fields: [sectionId], references: [id])
+  options             QuestionOption[]
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String?
+  order     Int?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id              String          @id @default(cuid())
+  invoice         String          @unique
+  userId          String
+  ujianId         String
+  total           Int
+  status          String          @default("PENDING")
+  paymentType     String?
+  snapToken       String?
+  midtransOrderId String?         @unique
+  paidAt          DateTime?
+  expiredAt       DateTime?
+  paymentResponse Json?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  redirectUrl     String?
+  ujian           Ujian           @relation(fields: [ujianId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  access          UserExamAccess?
+
+  @@index([userId])
+  @@index([ujianId])
+}
+
+model UserExamAccess {
+  id            String      @id @default(cuid())
+  userId        String
+  ujianId       String
+  transactionId String      @unique
+  activatedAt   DateTime    @default(now())
+  expiredAt     DateTime?
+  createdAt     DateTime    @default(now())
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  ujian         Ujian       @relation(fields: [ujianId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ujianId])
+}
+
+model ExamSession {
+  id                String                @id @default(cuid())
+  userId            String
+  ujianId           String
+  status            String                @default("ONGOING")
+  startedAt         DateTime              @default(now())
+  submittedAt       DateTime?
+  expiredAt         DateTime?
+  createdAt         DateTime              @default(now())
+  currentQuestionId String?
+  currentSection    Int                   @default(0)
+  fullscreenWarning Int                   @default(0)
+  tabWarning        Int                   @default(0)
+  answers           ExamAnswer[]
+  audioTracks       ExamAudioTrack[]
+  result            ExamResult?
+  ujian             Ujian                 @relation(fields: [ujianId], references: [id], onDelete: Cascade)
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionQuestions  ExamSessionQuestion[]
+
+  @@index([userId])
+  @@index([ujianId])
+  @@index([status])
+}
+
+model ExamAnswer {
+  id         String      @id @default(cuid())
+  sessionId  String
+  questionId String
+  answer     String?
+  isCorrect  Boolean?
+  answeredAt DateTime    @default(now())
+  question   Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  session    ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId])
+  @@index([questionId])
+}
+
+model ExamResult {
+  id            String      @id @default(cuid())
+  sessionId     String      @unique
+  totalCorrect  Int         @default(0)
+  totalWrong    Int         @default(0)
+  totalQuestion Int         @default(0)
+  score         Int         @default(0)
+  details       Json?
+  createdAt     DateTime    @default(now())
+  session       ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model ExamSessionQuestion {
+  id         String      @id @default(cuid())
+  sessionId  String
+  questionId String
+  order      Int
+  createdAt  DateTime    @default(now())
+  question   Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  session    ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId])
+  @@index([order])
+}
+
+model ExamAudioTrack {
+  id         String      @id @default(cuid())
+  sessionId  String
+  questionId String
+  createdAt  DateTime    @default(now())
+  playCount  Int         @default(0)
+  updatedAt  DateTime    @updatedAt
+  question   Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  session    ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  action    String
+  targetId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  actor     User     @relation(fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([action])
+}
+
+enum TransactionStatus {
+  PENDING
+  WAITING
+  SUCCESS
+  FAILED
+}

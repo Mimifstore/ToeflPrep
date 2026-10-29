@@ -1,12 +1,26 @@
+@import "react-quill/dist/quill.snow.css";
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overscroll-behavior: none;
+}
+
+
 
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
 }
+
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -16,12 +30,91 @@
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+.loading {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: 
+    radial-gradient(farthest-side,#FFE359 94%,#0000) top/8px 8px no-repeat,
+    conic-gradient(#0000 30%,#FFE359);
+  -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 8px),#000 0);
+  animation:s3 1s infinite linear;
+}
+
+@keyframes s3{ 
+  100%{transform: rotate(1turn)}
+}
+
+/* 🔥 BASE STYLE (udah lu punya, gw rapihin dikit) */
+.ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.ql-container {
+  border: none !important;
+}
+
+/* 🔥 DEFAULT EDITOR */
+.ql-editor {
+  font-size: 14px;
+}
+
+/* SOAL (utama, paling besar) */
+.editor-soal .ql-editor {
+  min-height: 300px;
+}
+
+/* PILIHAN A-D */
+.editor-pilihan .ql-editor {
+  min-height: 120px;
+}
+
+/* PEMBAHASAN */
+.editor-pembahasan .ql-editor {
+  min-height: 200px;
+}
+
+/* DIRECTION */
+.editor-direction .ql-editor {
+  min-height: 250px;
+}
+
+.ql-editor {
+  min-height: 150px;
+  font-size: 14px;
+  line-height: 1.6;
+
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.ql-editor p {
+  margin-bottom: 8px;
+}
+
+.ql-editor * {
+  max-width: 100%;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* 🔥 TAMBAHAN PENTING */
+.ql-editor pre,
+.ql-editor code {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+
+.ql-editor table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
 }
