@@ -1,281 +1,283 @@
 "use client";
 
-import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { X } from "lucide-react";
+import { ADMIN_NAV, isNavGroup } from "@/constants/admin-navigation";
+import { filterAdminNav, isPathActive } from "@/libs/admin-nav";
+import { isDesktopViewport, isEditableTarget } from "@/libs/dom";
+import SidebarGroup from "./sidebar/SidebarGroup";
+import SidebarLink from "./sidebar/SidebarLink";
+import SidebarSearch from "./sidebar/SidebarSearch";
 import {
-  Home,
-  Bell,
-  BookOpen,
-  ArrowLeftRight,
-  ArrowLeftFromLine,
-  AppWindow,
-  PenBoxIcon,
-  ChevronDown,
-  ChevronRight,
-  Users,
-  User,
-  Tags,
-  ListChecks,
-  FileText,
-  Monitor,
-  BarChart2,
-} from "lucide-react";
+  CENTER_WHEN_COLLAPSED,
+  HIDE_WHEN_COLLAPSED,
+  SHOW_WHEN_COLLAPSED,
+} from "./sidebar/styles";
+
+type SidebarProps = {
+  /** Mobile: drawer lagi kebuka atau nggak. */
+  isOpen: boolean;
+  onClose: () => void;
+  /** Desktop: true = cuma icon. */
+  collapsed: boolean;
+  /** Minta Shell buat melebarkan sidebar lagi. */
+  onExpand: () => void;
+};
+
+/** Group yang path-nya lagi dibuka langsung kebuka, jadi nggak ada kedip pas halaman dimuat. */
+function getInitialOpenGroups(pathname: string): Record<string, boolean> {
+  const open: Record<string, boolean> = {};
+  for (const section of ADMIN_NAV) {
+    for (const item of section.items) {
+      if (isNavGroup(item) && isPathActive(pathname, item.basePath)) {
+        open[item.basePath] = true;
+      }
+    }
+  }
+  return open;
+}
 
 export default function Sidebar({
   isOpen,
   onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
+  collapsed,
+  onExpand,
+}: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
-  const [openMaster, setOpenMaster] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navRef = useRef<HTMLElement>(null);
 
-  // 🔥 AUTO OPEN MASTER DATA IF ON CHILD PAGE
+  const [query, setQuery] = useState("");
+  const [pendingFocus, setPendingFocus] = useState(false);
+  const [openGroups, setOpenGroups] = useState(() =>
+    getInitialOpenGroups(pathname),
+  );
+
+  const isSearching = query.trim() !== "";
+  const filtered = useMemo(() => filterAdminNav(ADMIN_NAV, query), [query]);
+
+  // Pindah ke halaman di dalam group → group-nya otomatis kebuka.
   useEffect(() => {
-    if (pathname.includes("/master-data")) {
-      setOpenMaster(true);
-    }
+    setOpenGroups((prev) => ({ ...prev, ...getInitialOpenGroups(pathname) }));
   }, [pathname]);
 
-  const isActive = (path: string) => pathname === path;
+  // Sidebar dilipat → pencarian direset.
+  useEffect(() => {
+    if (collapsed) setQuery("");
+  }, [collapsed]);
 
-  const isActiveGroup = (path: string) => pathname.startsWith(path);
+  const focusSearch = useCallback(() => {
+    if (collapsed) {
+      onExpand();
+      setPendingFocus(true);
+      return;
+    }
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, [collapsed, onExpand]);
+
+  // Fokus ke input setelah sidebar selesai dilebarkan.
+  useEffect(() => {
+    if (pendingFocus && !collapsed) {
+      inputRef.current?.focus();
+      setPendingFocus(false);
+    }
+  }, [pendingFocus, collapsed]);
+
+  // Shortcut: "/" atau Ctrl/⌘ + K buat langsung nyari menu.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target) || !isDesktopViewport()) return;
+
+      const isSlash =
+        event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey;
+      const isCtrlK =
+        (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
+      if (!isSlash && !isCtrlK) return;
+
+      event.preventDefault();
+      focusSearch();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [focusSearch]);
+
+  const clearQuery = () => setQuery("");
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      const first = filtered.links[0];
+      if (first) {
+        router.push(first.href);
+        clearQuery();
+        inputRef.current?.blur();
+      }
+    } else if (event.key === "Escape") {
+      if (query) clearQuery();
+      else inputRef.current?.blur();
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      navRef.current?.querySelector<HTMLAnchorElement>("a[href]")?.focus();
+    }
+  };
+
+  const toggleGroup = (key: string) => {
+    // Lagi collapsed: klik group = lebarkan sidebar sekalian buka submenu-nya.
+    if (collapsed && isDesktopViewport()) {
+      onExpand();
+      setOpenGroups((prev) => ({ ...prev, [key]: true }));
+      return;
+    }
+    setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   return (
     <>
-      {/* OVERLAY */}
+      {/* OVERLAY (mobile) */}
       <div
-        className={`md:hidden fixed inset-0 bg-black/40 z-30 transition-opacity ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        aria-hidden="true"
+        className={`fixed inset-0 z-30 bg-black/40 transition-opacity md:hidden ${
+          isOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={onClose}
       />
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed left-0 top-0 z-40 h-[100dvh] w-64 bg-white border-r shadow-xl
-        transform transition-transform duration-200
+        id="admin-sidebar"
+        aria-label="Sidebar admin"
+        data-collapsed={collapsed}
+        className={`group/sidebar fixed left-0 top-0 z-40 h-[100dvh] w-64 border-r bg-white
+        transition-[transform,width] duration-200
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0`}
+        md:translate-x-0 md:data-[collapsed=true]:w-16`}
       >
-        <div className="h-full flex flex-col p-4">
+        <div className="flex h-full flex-col p-3 group-data-[collapsed=true]/sidebar:md:p-2">
           {/* HEADER */}
-          <div className="flex items-center justify-between mb-6 pb-4 border-b">
-            <Link href="/">
+          <div
+            className={`mb-3 flex h-12 shrink-0 items-center justify-between border-b pb-3 ${CENTER_WHEN_COLLAPSED}`}
+          >
+            <Link href="/" aria-label="ToeflPrep" className="flex items-center px-1">
               <Image
                 src="/images/logo.png"
-                alt="logo"
+                alt="ToeflPrep"
                 width={110}
-                height={110}
+                height={30}
+                priority
+                className={HIDE_WHEN_COLLAPSED}
+              />
+              <Image
+                src="/images/logo-mark.png"
+                alt=""
+                width={32}
+                height={32}
+                priority
+                className={SHOW_WHEN_COLLAPSED}
               />
             </Link>
 
             <button
+              type="button"
               onClick={onClose}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+              aria-label="Tutup menu"
+              className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden"
             >
-              <ArrowLeftFromLine className="w-5 h-5 text-gray-700" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
+          {/* SEARCH */}
+          <div className="mb-2 shrink-0">
+            <SidebarSearch
+              value={query}
+              inputRef={inputRef}
+              collapsed={collapsed}
+              onChange={setQuery}
+              onClear={() => {
+                clearQuery();
+                inputRef.current?.focus();
+              }}
+              onKeyDown={handleSearchKeyDown}
+              onCollapsedClick={focusSearch}
+            />
+          </div>
+
+          {/* Info hasil pencarian buat screen reader (di luar <nav> biar nggak ikut kena spasi antar-item) */}
+          <p role="status" aria-live="polite" className="sr-only">
+            {isSearching ? `${filtered.links.length} menu ditemukan` : ""}
+          </p>
+
           {/* NAV */}
-          <nav className="flex-1 space-y-1 text-sm font-medium">
-            {/* DASHBOARD */}
-            <Link
-              href="/admin"
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition
-              ${
-                isActive("/admin")
-                  ? "bg-blue-100 text-blue-600 font-semibold"
-                  : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-              }`}
-            >
-              <Home className="w-5 h-5" />
-              Dashboard
-            </Link>
+          <nav
+            ref={navRef}
+            aria-label="Menu admin"
+            className="-mx-1 flex-1 space-y-1 overflow-y-auto px-1 text-sm font-medium"
+          >
+            {isSearching && filtered.links.length === 0 && (
+              <p className="break-words px-3 py-6 text-center text-sm font-normal text-gray-500">
+                Menu “{query.trim()}” tidak ditemukan
+              </p>
+            )}
 
-            <div className="text-[11px] text-gray-400 uppercase px-3 pt-6">
-              Navigation
-            </div>
-
-            {/* MASTER DATA */}
-            <div>
-              <button
-                onClick={() => setOpenMaster(!openMaster)}
-                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition
-                ${
-                  isActiveGroup("/admin/master-data")
-                    ? "bg-blue-100 text-blue-600 font-semibold"
-                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                }`}
-              >
-                <span className="flex items-center gap-3">
-                  <AppWindow className="w-5 h-5" />
-                  Master Data
-                </span>
-
-                {openMaster ? (
-                  <ChevronDown size={16} />
-                ) : (
-                  <ChevronRight size={16} />
+            {filtered.sections.map((section, index) => (
+              <div key={section.title ?? `section-${index}`} className="space-y-1">
+                {section.title && (
+                  <>
+                    <p
+                      className={`px-3 pb-1 pt-5 text-[11px] md:pt-4 font-semibold uppercase tracking-wide text-gray-400 ${HIDE_WHEN_COLLAPSED}`}
+                    >
+                      {section.title}
+                    </p>
+                    <div
+                      className={`mx-2 my-3 border-t ${SHOW_WHEN_COLLAPSED}`}
+                      aria-hidden="true"
+                    />
+                  </>
                 )}
-              </button>
 
-              {/* SUB MENU */}
-              <div
-                className={`ml-6 mt-2 space-y-1 overflow-hidden transition-all duration-200 ${
-                  openMaster ? "max-h-96" : "max-h-0"
-                }`}
-              >
-                <SubItem
-                  href="/admin/master-data/users"
-                  icon={<Users className="w-4 h-4" />}
-                  label="User Account"
-                  active={isActive("/admin/master-data/users")}
-                />
-
-                <SubItem
-                  href="/admin/master-data/siswa"
-                  icon={<User className="w-4 h-4" />}
-                  label="Siswa"
-                  active={isActive("/admin/master-data/siswa")}
-                />
-
-                <SubItem
-                  href="/admin/master-data/program"
-                  icon={<Tags className="w-4 h-4" />}
-                  label="Kategori"
-                  active={isActive("/admin/master-data/program")}
-                />
-
-                <SubItem
-                  href="/admin/master-data/kategori-penilaian"
-                  icon={<ListChecks className="w-4 h-4" />}
-                  label="Kategori Penilaian"
-                  active={isActive("/admin/master-data/kategori-penilaian")}
-                />
-
-                <SubItem
-                  href="/admin/master-data/soal"
-                  icon={<FileText className="w-4 h-4" />}
-                  label="Soal"
-                  active={isActive("/admin/master-data/soal")}
-                />
+                {section.items.map((item) =>
+                  isNavGroup(item) ? (
+                    <SidebarGroup
+                      key={item.basePath}
+                      group={item}
+                      open={isSearching || !!openGroups[item.basePath]}
+                      collapsed={collapsed}
+                      query={query}
+                      pathname={pathname}
+                      onToggle={() => toggleGroup(item.basePath)}
+                      onNavigate={clearQuery}
+                    />
+                  ) : (
+                    <SidebarLink
+                      key={item.href}
+                      href={item.href}
+                      icon={item.icon}
+                      label={item.label}
+                      active={isPathActive(pathname, item.href, item.exact)}
+                      collapsed={collapsed}
+                      query={query}
+                      onNavigate={clearQuery}
+                    />
+                  ),
+                )}
               </div>
-            </div>
-
-            {/* MENU LAIN */}
-            <NavItem
-              href="/admin/ujian"
-              icon={<PenBoxIcon className="w-5 h-5" />}
-              label="Ujian"
-              active={isActive("/admin/ujian")}
-            />
-
-            <NavItem
-              href="/admin/pengumuman"
-              icon={<Bell className="w-5 h-5" />}
-              label="Pengumuman"
-              active={isActive("/admin/pengumuman")}
-            />
-
-            <NavItem
-              href="/admin/faq"
-              icon={<BookOpen className="w-5 h-5" />}
-              label="FAQ"
-              active={isActive("/admin/faq")}
-            />
-            <NavItem
-              href="/admin/monitoring"
-              icon={<Monitor className="w-5 h-5" />}
-              label="Monitoring"
-              active={isActive("/admin/monitoring")}
-            />
-            <NavItem
-              href="/admin/rekap"
-              icon={<BarChart2 className="w-5 h-5" />}
-              label="Rekap Nilai"
-              active={isActiveGroup("/admin/rekap")}
-            />
-
-            <div className="text-[11px] text-gray-400 uppercase px-3 pt-6">
-              Transaksi
-            </div>
-
-            <NavItem
-              href="/admin/transaksi"
-              icon={<ArrowLeftRight className="w-5 h-5" />}
-              label="Transaksi"
-              active={isActive("/admin/transaksi")}
-            />
+            ))}
           </nav>
 
           {/* FOOTER */}
-          <div className="text-xs font-semibold text-gray-400 px-3 pt-4 border-t mt-4">
+          <div
+            className={`mt-3 shrink-0 border-t px-3 pt-3 text-xs font-medium text-gray-400 ${HIDE_WHEN_COLLAPSED}`}
+          >
             © {new Date().getFullYear()} ToeflPrep
           </div>
         </div>
       </aside>
     </>
-  );
-}
-
-/* 🔥 MAIN ITEM */
-function NavItem({
-  href,
-  icon,
-  label,
-  active,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition
-      ${
-        active
-          ? "bg-blue-100 text-blue-600 font-semibold"
-          : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-      }`}
-    >
-      <span>{icon}</span>
-      {label}
-    </Link>
-  );
-}
-
-/* 🔥 SUB ITEM */
-function SubItem({
-  href,
-  icon,
-  label,
-  active,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition
-      ${
-        active
-          ? "bg-blue-50 text-blue-600 font-semibold"
-          : "text-gray-600 hover:bg-blue-50 hover:text-blue-600"
-      }`}
-    >
-      <span>{icon}</span>
-      {label}
-    </Link>
   );
 }
