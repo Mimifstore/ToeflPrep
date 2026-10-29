@@ -4,12 +4,13 @@
 // - 'self' buat semua asset dari domain sendiri
 // - Midtrans Snap.js (sandbox & production, sesuai src/app/layout.tsx)
 // - Supabase (gambar via next/image + koneksi API)
+// - Google/GitHub avatar (foto profil akun yang login lewat OAuth)
 // - Google/GitHub buat OAuth redirect
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.midtrans.com https://app.sandbox.midtrans.com;
   style-src 'self' 'unsafe-inline';
-  img-src 'self' data: blob: https://nfrfamcqqkbryfqmxokz.supabase.co;
+  img-src 'self' data: blob: https://nfrfamcqqkbryfqmxokz.supabase.co https://lh3.googleusercontent.com https://avatars.githubusercontent.com;
   font-src 'self' data:;
   connect-src 'self' https://nfrfamcqqkbryfqmxokz.supabase.co https://app.midtrans.com https://app.sandbox.midtrans.com;
   frame-src 'self' https://app.midtrans.com https://app.sandbox.midtrans.com;

@@ -42,7 +42,7 @@ export default function SidebarSearch({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={onKeyDown}
-          className="h-9 w-full rounded-lg border border-gray-200 bg-gray-50 pl-9 pr-9 text-sm text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="h-9 w-full rounded-lg border border-gray-200 bg-gray-50 pl-9 pr-9 text-sm text-gray-800 placeholder:text-gray-400 focus:border-gray-300 focus:bg-white focus:outline-none"
         />
         {value ? (
           <button

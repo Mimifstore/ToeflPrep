@@ -112,3 +112,10 @@ export function isPathActive(
   if (pathname === href) return true;
   return !exact && pathname.startsWith(`${href}/`);
 }
+
+/** Filter daftar item biasa (label + keywords) dengan aturan yang sama seperti search sidebar. */
+export function filterByQuery<T extends Searchable>(items: T[], query: string): T[] {
+  const tokens = tokenize(query);
+  if (tokens.length === 0) return items;
+  return items.filter((item) => matchesAll(tokens, haystack(item)));
+}

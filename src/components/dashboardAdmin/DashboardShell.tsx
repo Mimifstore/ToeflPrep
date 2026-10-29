@@ -8,7 +8,8 @@ import {
 } from "@/constants/sidebar";
 import { isDesktopViewport, isEditableTarget } from "@/libs/dom";
 import Sidebar from "./Sidebar";
-import Topbar, { type TopbarSession } from "./Topbar";
+import type { TopbarSession } from "@/types/admin-shell";
+import Topbar from "./Topbar";
 
 type DashboardShellProps = {
   children: React.ReactNode;

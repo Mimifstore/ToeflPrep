@@ -89,16 +89,14 @@ export default function Sidebar({
     }
   }, [pendingFocus, collapsed]);
 
-  // Shortcut: "/" atau Ctrl/⌘ + K buat langsung nyari menu.
+  // Shortcut "/" buat langsung nyari menu. (Ctrl/⌘ + K dipakai pencarian data di topbar.)
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (isEditableTarget(event.target) || !isDesktopViewport()) return;
 
       const isSlash =
         event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey;
-      const isCtrlK =
-        (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
-      if (!isSlash && !isCtrlK) return;
+      if (!isSlash) return;
 
       event.preventDefault();
       focusSearch();
