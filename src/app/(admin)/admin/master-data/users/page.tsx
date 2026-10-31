@@ -13,12 +13,17 @@ type User = {
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
   //  FETCH USERS
   const fetchUsers = async () => {
-    const res = await fetch("/api/user");
-    const data = await res.json();
-    setUsers(data);
+    try {
+      const res = await fetch("/api/user");
+      const data = await res.json();
+      setUsers(data);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -60,6 +65,7 @@ export default function UsersPage() {
 
       <UsersTable
         users={users}
+        loading={loading}
         onDelete={deleteUser}
         onRoleChange={changeRole}
         onToggle={toggleStatus} 

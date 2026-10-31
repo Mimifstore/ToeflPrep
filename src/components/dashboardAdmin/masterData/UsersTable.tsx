@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Trash2, Eye, EyeOff } from "lucide-react";
+import { CardListSkeleton, TableRowsSkeleton } from "@/components/Ui/Skeleton";
 
 type User = {
   id: string;
@@ -16,6 +17,7 @@ export default function UsersTable({
   onDelete,
   onRoleChange,
   onToggle,
+  loading = false,
 }: any) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -48,7 +50,9 @@ export default function UsersTable({
 
       {/* 🔥 MOBILE */}
       <div className="md:hidden space-y-3">
-        {paginated.length === 0 ? (
+        {loading ? (
+          <CardListSkeleton />
+        ) : paginated.length === 0 ? (
           <div className="text-center py-6 text-gray-400 text-sm">
             Tidak ada data
           </div>
@@ -152,7 +156,9 @@ export default function UsersTable({
           </thead>
 
           <tbody>
-            {paginated.length === 0 ? (
+            {loading ? (
+              <TableRowsSkeleton cols={6} />
+            ) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center py-6 text-gray-400">
                   Tidak ada data

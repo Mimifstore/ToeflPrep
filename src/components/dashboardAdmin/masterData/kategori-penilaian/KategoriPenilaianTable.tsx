@@ -3,18 +3,24 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LayoutGrid, PenBox, Trash2 } from "lucide-react";
+import { CardListSkeleton, TableRowsSkeleton } from "@/components/Ui/Skeleton";
 
 export default function Table() {
   const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
   const perPage = 5;
 
   const fetchData = async () => {
-    const res = await fetch("/api/category-score");
-    const result = await res.json();
-    setData(result);
+    try {
+      const res = await fetch("/api/category-score");
+      const result = await res.json();
+      setData(result);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -56,7 +62,9 @@ export default function Table() {
 
       {/* 🔥 MOBILE */}
       <div className="md:hidden space-y-3">
-        {paginated.length === 0 ? (
+        {loading ? (
+          <CardListSkeleton />
+        ) : paginated.length === 0 ? (
           <div className="text-center py-6 text-gray-400 text-sm">
             Data kosong
           </div>
@@ -142,63 +150,73 @@ export default function Table() {
           </thead>
 
           <tbody>
-            {paginated.map((d, i) => (
-              <tr
-                key={d.id}
-                className="border-b align-middle text-xs md:text-sm font-medium"
-              >
-                <td className="px-3 py-3 text-xs md:text-sm font-medium">
-                  {(page - 1) * perPage + i + 1}
-                </td>
-                <td className="px-3 py-3 text-xs md:text-sm font-medium">
-                  {d.program}
-                </td>
-                <td className="px-3 py-3 text-xs md:text-sm font-medium">
-                  {d.name}
-                </td>
-                <td className="px-3 py-3 text-xs md:text-sm font-medium">
-                  Nilai = Jumlah Jawaban Benar
-                </td>
-                <td className="px-3 py-3 text-xs md:text-sm font-medium">
-                  {d.section?.order || "-"}
-                </td>
-
-                <td className="flex gap-2 py-2 items-center">
-                  <Link href={`/admin/master-data/kategori-penilaian/${d.id}`}>
-                    <button className="p-1.5 md:p-2 bg-gray-200 rounded-md md:rounded-lg">
-                      <LayoutGrid
-                        size={14}
-                        className="md:w-4 md:h-4"
-                        strokeWidth={2.5}
-                      />
-                    </button>
-                  </Link>
-
-                  <Link
-                    href={`/admin/master-data/kategori-penilaian/create?id=${d.id}`}
-                  >
-                    <button className="p-1.5 md:p-2 bg-gray-200 rounded-md md:rounded-lg">
-                      <PenBox
-                        size={14}
-                        className="md:w-4 md:h-4"
-                        strokeWidth={2.5}
-                      />
-                    </button>
-                  </Link>
-
-                  <button
-                    onClick={() => handleDelete(d.id)}
-                    className="p-1.5 rounded-md bg-gray-100 hover:bg-red-100 transition group"
-                  >
-                    <Trash2
-                      size={14}
-                      className="md:w-4 md:h-4 text-gray-600 group-hover:text-red-600"
-                      strokeWidth={2.5}
-                    />
-                  </button>
+            {loading ? (
+              <TableRowsSkeleton cols={6} />
+            ) : paginated.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-6 text-gray-400">
+                  Data kosong
                 </td>
               </tr>
-            ))}
+            ) : (
+              paginated.map((d, i) => (
+                <tr
+                  key={d.id}
+                  className="border-b align-middle text-xs md:text-sm font-medium"
+                >
+                  <td className="px-3 py-3 text-xs md:text-sm font-medium">
+                    {(page - 1) * perPage + i + 1}
+                  </td>
+                  <td className="px-3 py-3 text-xs md:text-sm font-medium">
+                    {d.program}
+                  </td>
+                  <td className="px-3 py-3 text-xs md:text-sm font-medium">
+                    {d.name}
+                  </td>
+                  <td className="px-3 py-3 text-xs md:text-sm font-medium">
+                    Nilai = Jumlah Jawaban Benar
+                  </td>
+                  <td className="px-3 py-3 text-xs md:text-sm font-medium">
+                    {d.section?.order || "-"}
+                  </td>
+
+                  <td className="flex gap-2 py-2 items-center">
+                    <Link href={`/admin/master-data/kategori-penilaian/${d.id}`}>
+                      <button className="p-1.5 md:p-2 bg-gray-200 rounded-md md:rounded-lg">
+                        <LayoutGrid
+                          size={14}
+                          className="md:w-4 md:h-4"
+                          strokeWidth={2.5}
+                        />
+                      </button>
+                    </Link>
+
+                    <Link
+                      href={`/admin/master-data/kategori-penilaian/create?id=${d.id}`}
+                    >
+                      <button className="p-1.5 md:p-2 bg-gray-200 rounded-md md:rounded-lg">
+                        <PenBox
+                          size={14}
+                          className="md:w-4 md:h-4"
+                          strokeWidth={2.5}
+                        />
+                      </button>
+                    </Link>
+
+                    <button
+                      onClick={() => handleDelete(d.id)}
+                      className="p-1.5 rounded-md bg-gray-100 hover:bg-red-100 transition group"
+                    >
+                      <Trash2
+                        size={14}
+                        className="md:w-4 md:h-4 text-gray-600 group-hover:text-red-600"
+                        strokeWidth={2.5}
+                      />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

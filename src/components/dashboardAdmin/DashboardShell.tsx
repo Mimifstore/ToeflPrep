@@ -66,7 +66,7 @@ export default function DashboardShell({
   }, [collapsed, updateCollapsed]);
 
   return (
-    <div className="flex min-h-screen bg-gray-50 text-gray-800">
+    <div className="flex min-h-screen animate-brand-in bg-gray-50 text-gray-800">
       <Sidebar
         isOpen={open}
         onClose={() => setOpen(false)}

@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import { Trash2, PenBox, Search } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { CardListSkeleton, TableRowsSkeleton } from "@/components/Ui/Skeleton";
+import Busy from "@/components/Ui/Busy";
 
 export default function FaqTable() {
   const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
@@ -22,6 +25,8 @@ export default function FaqTable() {
     } catch (err) {
       console.error(err);
       setData([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,7 +67,9 @@ export default function FaqTable() {
 
       {/* ✅ MOBILE CARD */}
       <div className="md:hidden space-y-3">
-        {paginated.length === 0 ? (
+        {loading ? (
+          <CardListSkeleton />
+        ) : paginated.length === 0 ? (
           <div className="text-center py-6 text-gray-400">
             Data FAQ kosong
           </div>
@@ -145,7 +152,9 @@ export default function FaqTable() {
           </thead>
 
           <tbody>
-            {paginated.length === 0 ? (
+            {loading ? (
+              <TableRowsSkeleton cols={6} />
+            ) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center py-10 text-gray-400">
                   Data FAQ kosong
@@ -271,7 +280,7 @@ export default function FaqTable() {
                 }}
                 className="px-3 py-2 text-sm bg-red-500 text-white rounded-lg"
               >
-                {loadingDelete ? "Menghapus..." : "Hapus"}
+                <Busy loading={loadingDelete} text="Menghapus...">Hapus</Busy>
               </button>
             </div>
           </div>

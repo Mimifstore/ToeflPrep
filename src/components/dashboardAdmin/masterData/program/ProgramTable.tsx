@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PenBox, Trash2, Plus, AlertTriangle, X } from "lucide-react";
+import { CardListSkeleton, TableRowsSkeleton } from "@/components/Ui/Skeleton";
+import Busy from "@/components/Ui/Busy";
 
 export default function ProgramTable() {
   const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
@@ -15,9 +18,13 @@ export default function ProgramTable() {
   const [deleting, setDeleting] = useState(false);
 
   const fetchData = async () => {
-    const res = await fetch("/api/program");
-    const result = await res.json();
-    setData(result);
+    try {
+      const res = await fetch("/api/program");
+      const result = await res.json();
+      setData(result);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -63,7 +70,9 @@ export default function ProgramTable() {
 
       {/* MOBILE */}
       <div className="md:hidden space-y-3">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <CardListSkeleton />
+        ) : filtered.length === 0 ? (
           <div className="text-center py-8 text-gray-400 text-sm">
             Data kosong
           </div>
@@ -128,7 +137,9 @@ export default function ProgramTable() {
           </thead>
 
           <tbody>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <TableRowsSkeleton cols={4} />
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={4} className="text-center py-8 text-gray-400">
                   Data kosong
@@ -229,7 +240,7 @@ export default function ProgramTable() {
                 disabled={deleting}
                 className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-sm font-medium text-white transition-colors disabled:opacity-50"
               >
-                {deleting ? "Menghapus..." : "Ya, Hapus"}
+                <Busy loading={deleting} text="Menghapus...">Ya, Hapus</Busy>
               </button>
             </div>
           </div>

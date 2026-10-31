@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
+import Busy from "@/components/Ui/Busy";
 
 export default function DetailSoal({ examId }: { examId: string }) {
   const [page, setPage] = useState(1);
@@ -300,7 +301,7 @@ export default function DetailSoal({ examId }: { examId: string }) {
               className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white px-3 py-2 rounded-lg text-sm transition"
             >
               <Upload size={14} />
-              {importing ? "Importing..." : "Import Excel"}
+              <Busy loading={importing} text="Importing...">Import Excel</Busy>
             </button>
 
             <Link href="/admin/master-data/soal/bulk-audio">
@@ -633,7 +634,7 @@ export default function DetailSoal({ examId }: { examId: string }) {
                 }}
                 className="px-3 py-2 text-sm bg-red-500 text-white rounded-lg"
               >
-                {loadingDelete ? "Menghapus..." : "Hapus"}
+                <Busy loading={loadingDelete} text="Menghapus...">Hapus</Busy>
               </button>
             </div>
           </div>

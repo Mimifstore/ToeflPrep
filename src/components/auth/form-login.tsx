@@ -6,6 +6,7 @@ import { Mail, Lock } from "lucide-react";
 import { signInCredentials } from "@/libs/actions";
 import { LoginButton } from "../button";
 import { GithubButton, GoogleButton } from "./social-button";
+import AuthPendingOverlay from "./pending-overlay";
 
 const FormLogin = () => {
   const [state, formAction] = useFormState(signInCredentials, null);
@@ -22,6 +23,7 @@ const FormLogin = () => {
       </div>
 
       <form action={formAction} className="space-y-5">
+        <AuthPendingOverlay />
         {state?.message ? (
           <div
             className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600"

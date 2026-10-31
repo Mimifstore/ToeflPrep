@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Trash2, Search, LayoutGrid, PenBox } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { CardListSkeleton, TableRowsSkeleton } from "@/components/Ui/Skeleton";
+import Busy from "@/components/Ui/Busy";
 
 export default function UjianTable() {
   const [search, setSearch] = useState("");
@@ -69,7 +71,7 @@ export default function UjianTable() {
       {/* ================= MOBILE ================= */}
       <div className="md:hidden space-y-3">
         {loading ? (
-          <div className="text-center text-gray-400 py-6">Loading...</div>
+          <CardListSkeleton />
         ) : paginated.length === 0 ? (
           <div className="text-center text-gray-400 py-6">
             Belum ada data ujian
@@ -174,11 +176,7 @@ export default function UjianTable() {
 
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan={8} className="text-center py-10 text-gray-400">
-                  Loading...
-                </td>
-              </tr>
+              <TableRowsSkeleton cols={8} />
             ) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={8} className="text-center py-10 text-gray-400">
@@ -302,7 +300,7 @@ export default function UjianTable() {
                 }}
                 className="px-3 py-2 text-sm bg-red-500 text-white rounded-lg"
               >
-                {loadingDelete ? "Menghapus..." : "Hapus"}
+                <Busy loading={loadingDelete} text="Menghapus...">Hapus</Busy>
               </button>
             </div>
           </div>

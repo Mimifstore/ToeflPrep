@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import CreateQuestionForm from "@/components/dashboardAdmin/masterData/soal/CreateQuestionForm";
+import { FormSkeleton } from "@/components/Ui/Skeleton";
 
 export default function EditQuestionPage() {
   const params = useParams();
@@ -19,7 +20,7 @@ export default function EditQuestionPage() {
   }, [questionId]);
 
   if (!form) {
-    return <div className="p-6">Loading...</div>;
+    return <FormSkeleton fields={5} />;
   }
 
   

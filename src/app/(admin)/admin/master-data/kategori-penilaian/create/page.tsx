@@ -3,6 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
+import Busy from "@/components/Ui/Busy";
 
 // 🔥 TABEL KONVERSI TOEFL ITP STANDAR
 const TOEFL_TABLES: Record<string, Record<number, number>> = {
@@ -630,7 +631,7 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
             disabled={loading}
             className="bg-blue-600 hover:bg-blue-700 transition text-white px-5 py-3 rounded-xl text-sm font-semibold disabled:opacity-50"
           >
-            {loading ? "Menyimpan..." : "Simpan"}
+            <Busy loading={loading} text="Menyimpan...">Simpan</Busy>
           </button>
           <button
             onClick={() => router.push(LIST_URL)}
@@ -671,7 +672,7 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
                 disabled={creatingSection}
                 className="px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold disabled:opacity-50"
               >
-                {creatingSection ? "Menyimpan..." : "Simpan"}
+                <Busy loading={creatingSection} text="Menyimpan...">Simpan</Busy>
               </button>
             </div>
           </div>

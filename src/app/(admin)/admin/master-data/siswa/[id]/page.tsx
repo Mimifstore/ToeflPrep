@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import DetailSiswa from "@/components/dashboardAdmin/masterData/siswa/DetailSiswa";
+import { DetailSkeleton } from "@/components/Ui/Skeleton";
 
 export default function DetailSiswaPage() {
   const { id } = useParams();
@@ -21,14 +22,7 @@ export default function DetailSiswaPage() {
     if (id) fetchData();
   }, [id]);
 
-  // 🔥 LOADING SPINNER (BULET MUTER)
-  if (!data) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  if (!data) return <DetailSkeleton />;
 
   return <DetailSiswa data={data} onBack={() => router.back()} />;
 }

@@ -146,7 +146,14 @@ export default function StatCards() {
             <div>
               <div className="text-white/80 text-xs">{s.title}</div>
               <div className="text-xl font-bold text-white">
-                {loading ? "..." : s.value}
+                {loading ? (
+                  <span
+                    aria-hidden="true"
+                    className="inline-block h-5 w-12 animate-pulse rounded bg-white/30 align-middle motion-reduce:animate-none"
+                  />
+                ) : (
+                  s.value
+                )}
               </div>
             </div>
 
@@ -167,7 +174,14 @@ export default function StatCards() {
             <div>
               <div className={`${s.colors} text-sm`}>{s.title}</div>
               <div className={`text-2xl font-bold ${s.colors}`}>
-                {loading ? "..." : s.value}
+                {loading ? (
+                  <span
+                    aria-hidden="true"
+                    className="inline-block h-6 w-14 animate-pulse rounded bg-black/10 align-middle motion-reduce:animate-none"
+                  />
+                ) : (
+                  s.value
+                )}
               </div>
             </div>
             <div

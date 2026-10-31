@@ -8,6 +8,7 @@ import {
   XCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Busy from "@/components/Ui/Busy";
 
 export default function MonitoringTable() {
   const [data, setData] = useState<any[]>([]);
@@ -137,7 +138,12 @@ export default function MonitoringTable() {
             <p className="text-xs text-gray-400 mt-0.5">
               {lastUpdated
                 ? `Terakhir diupdate: ${lastUpdated.toLocaleTimeString("id-ID")}`
-                : "Memuat data..."}
+                : (
+                  <span
+                    aria-hidden="true"
+                    className="inline-block h-3 w-40 animate-pulse rounded bg-gray-200 align-middle motion-reduce:animate-none"
+                  />
+                )}
             </p>
           </div>
           <button
@@ -335,7 +341,7 @@ export default function MonitoringTable() {
                 disabled={submitting}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-xl py-3 text-sm font-semibold transition disabled:opacity-50"
               >
-                {submitting ? "Memproses..." : "Ya, Force Submit"}
+                <Busy loading={submitting} text="Memproses...">Ya, Force Submit</Busy>
               </button>
             </div>
           </div>

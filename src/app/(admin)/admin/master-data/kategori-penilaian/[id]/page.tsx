@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { DetailSkeleton } from "@/components/Ui/Skeleton";
 
 export default function DetailKategoriPenilaian() {
   const params = useParams();
@@ -23,13 +24,7 @@ export default function DetailKategoriPenilaian() {
       });
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="bg-white p-6 rounded-2xl shadow">
-        Loading...
-      </div>
-    );
-  }
+  if (loading) return <DetailSkeleton />;
 
   if (!data) {
     return (

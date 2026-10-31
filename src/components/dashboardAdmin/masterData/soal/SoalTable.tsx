@@ -5,11 +5,14 @@ import Link from "next/link";
 import { LayoutGrid, PenBox, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import MobileCardList from "@/components/Ui/MobileCardList";
+import { CardListSkeleton, TableRowsSkeleton } from "@/components/Ui/Skeleton";
+import Busy from "@/components/Ui/Busy";
 
 export default function SoalTable() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
@@ -20,7 +23,8 @@ export default function SoalTable() {
   useEffect(() => {
     fetch("/api/soal")
       .then((res) => res.json())
-      .then((res) => setData(res));
+      .then((res) => setData(res))
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = data.filter((d) =>
@@ -52,6 +56,7 @@ export default function SoalTable() {
 
       <MobileCardList
         data={paginated}
+        loading={loading}
         emptyText="Belum ada data soal"
         renderItem={(d, i) => (
           <div
@@ -127,7 +132,9 @@ export default function SoalTable() {
           </thead>
 
           <tbody>
-            {paginated.length === 0 ? (
+            {loading ? (
+              <TableRowsSkeleton cols={6} />
+            ) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center py-6 text-gray-400">
                   Belum ada data soal
@@ -251,7 +258,7 @@ export default function SoalTable() {
                 }}
                 className="px-3 py-2 text-sm bg-red-500 text-white rounded-lg"
               >
-                {loadingDelete ? "Menghapus..." : "Hapus"}
+                <Busy loading={loadingDelete} text="Menghapus...">Hapus</Busy>
               </button>
             </div>
           </div>

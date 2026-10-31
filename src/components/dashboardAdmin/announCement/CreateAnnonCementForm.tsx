@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import RichTextEditor from "@/components/Ui/RichTextEditor";
 import Link from "next/link";
+import { FormSkeleton } from "@/components/Ui/Skeleton";
+import Busy from "@/components/Ui/Busy";
 
 export default function CreateAnnouncementForm({ id }: { id?: string }) {
   const router = useRouter();
@@ -70,8 +72,7 @@ export default function CreateAnnouncementForm({ id }: { id?: string }) {
     }
   };
 
-  if (loadingFetch)
-    return <div className="text-center py-10 text-gray-400">Loading...</div>;
+  if (loadingFetch) return <FormSkeleton />;
 
   return (
     <form className="bg-white p-4 md:p-6 rounded-2xl shadow border space-y-5">
@@ -126,7 +127,7 @@ export default function CreateAnnouncementForm({ id }: { id?: string }) {
           disabled={loading}
           className="bg-blue-600 text-white w-full md:w-auto px-4 py-2 rounded-lg text-sm"
         >
-          {loading ? "Menyimpan..." : isEdit ? "Update" : "Simpan"}
+          <Busy loading={loading} text="Menyimpan...">{isEdit ? "Update" : "Simpan"}</Busy>
         </button>
       </div>
     </form>

@@ -3,18 +3,24 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LayoutGrid, PenBox } from "lucide-react";
+import { CardListSkeleton, TableRowsSkeleton } from "@/components/Ui/Skeleton";
 
 export default function SiswaTable() {
   const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
   const perPage = 5;
 
   const fetchData = async () => {
-    const res = await fetch("/api/siswa");
-    const result = await res.json();
-    setData(result);
+    try {
+      const res = await fetch("/api/siswa");
+      const result = await res.json();
+      setData(result);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -47,7 +53,9 @@ export default function SiswaTable() {
 
       {/*  MOBILE */}
       <div className="md:hidden space-y-3">
-        {paginated.length === 0 ? (
+        {loading ? (
+          <CardListSkeleton />
+        ) : paginated.length === 0 ? (
           <div className="text-center py-6 text-gray-400 text-sm">
             Data kosong
           </div>
@@ -131,7 +139,9 @@ export default function SiswaTable() {
           </thead>
 
           <tbody>
-            {paginated.length === 0 ? (
+            {loading ? (
+              <TableRowsSkeleton cols={6} />
+            ) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center py-6 text-gray-400">
                   Data kosong

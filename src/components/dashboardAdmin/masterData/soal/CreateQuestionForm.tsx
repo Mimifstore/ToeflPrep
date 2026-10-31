@@ -8,6 +8,7 @@ import { uploadAudio as uploadAudioFile } from "@/libs/upload-audio";
 
 import SelectField from "@/components/Ui/SelectField";
 import { typeOptions } from "@/constants/options";
+import Busy from "@/components/Ui/Busy";
 
 // 🔥 KONSTANTA VALIDASI FILE
 const ALLOWED_AUDIO_TYPES = [
@@ -490,7 +491,7 @@ export default function CreateQuestionForm({
         disabled={loading}
         className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
       >
-        {loading ? "Menyimpan..." : "Submit"}
+        <Busy loading={loading} text="Menyimpan...">Submit</Busy>
       </button>
     </form>
   );

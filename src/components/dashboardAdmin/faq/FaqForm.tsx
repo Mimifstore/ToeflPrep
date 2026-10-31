@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import SelectField from "@/components/Ui/SelectField";
+import { FormSkeleton } from "@/components/Ui/Skeleton";
+import Busy from "@/components/Ui/Busy";
 
 const RichTextEditor = dynamic(() => import("@/components/Ui/RichTextEditor"), {
   ssr: false,
@@ -75,7 +77,7 @@ export default function FaqForm({ id }: { id?: string }) {
   };
 
   if (loadingFetch) {
-    return <div className="text-center py-10 text-gray-400">Loading...</div>;
+    return <FormSkeleton />;
   }
 
   return (
@@ -173,7 +175,7 @@ export default function FaqForm({ id }: { id?: string }) {
           disabled={loading}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm w-full md:w-auto"
         >
-          {loading ? "Menyimpan..." : isEdit ? "Update" : "Simpan"}
+          <Busy loading={loading} text="Menyimpan...">{isEdit ? "Update" : "Simpan"}</Busy>
         </button>
       </div>
     </form>

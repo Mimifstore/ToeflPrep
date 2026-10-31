@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { DetailSkeleton } from "@/components/Ui/Skeleton";
+import Busy from "@/components/Ui/Busy";
 
 export default function DetailUjian({ id }: { id: string }) {
   const router = useRouter();
@@ -21,8 +23,7 @@ export default function DetailUjian({ id }: { id: string }) {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading)
-    return <div className="text-center py-10 text-gray-400">Loading...</div>;
+  if (loading) return <DetailSkeleton />;
   if (!data) return <div>Data tidak ditemukan</div>;
 
   return (
@@ -191,7 +192,7 @@ export default function DetailUjian({ id }: { id: string }) {
                 }}
                 className="px-3 py-2 text-sm bg-red-500 text-white rounded-lg"
               >
-                {loadingDelete ? "Menghapus..." : "Hapus"}
+                <Busy loading={loadingDelete} text="Menghapus...">Hapus</Busy>
               </button>
             </div>
           </div>

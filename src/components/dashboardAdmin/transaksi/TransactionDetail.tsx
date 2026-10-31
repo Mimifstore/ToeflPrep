@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import Busy from "@/components/Ui/Busy";
 
 const statusColor: any = {
   PENDING: "bg-yellow-100 text-yellow-600",
@@ -114,14 +115,14 @@ export function TransactionDetail({ id }: { id: string }) {
             onClick={() => updateStatus("SUCCESS")}
             className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50"
           >
-            {loading ? "Memproses..." : "✓ Approve"}
+            <Busy loading={loading} text="Memproses...">✓ Approve</Busy>
           </button>
           <button
             disabled={loading}
             onClick={() => updateStatus("FAILED")}
             className="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50"
           >
-            {loading ? "Memproses..." : "✗ Reject"}
+            <Busy loading={loading} text="Memproses...">✗ Reject</Busy>
           </button>
         </div>
       )}

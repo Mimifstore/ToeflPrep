@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import SelectField from "@/components/Ui/SelectField";
+import Busy from "@/components/Ui/Busy";
 
 export default function CreateSoalForm() {
   const router = useRouter();
@@ -237,7 +238,7 @@ export default function CreateSoalForm() {
           disabled={loading}
           className="w-full md:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50"
         >
-          {loading ? "Menyimpan..." : id ? "Update" : "Simpan"}
+          <Busy loading={loading} text="Menyimpan...">{id ? "Update" : "Simpan"}</Busy>
         </button>
       </div>
     </form>
