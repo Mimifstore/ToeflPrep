@@ -2,6 +2,7 @@ import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { requireAdmin, requireAuth } from "@/libs/api-auth";
 import { z } from "zod";
+import { validationErrorResponse } from "@/libs/api-errors";
 
 const programSchema = z.object({
   name: z.string().trim().min(1, "Nama wajib diisi").max(100),
@@ -47,10 +48,7 @@ export async function POST(req: Request) {
     const validated = programSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 }
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const data = await prisma.program.create({ data: validated.data });
@@ -70,10 +68,7 @@ export async function PATCH(req: Request) {
     const validated = updateProgramSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 }
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const { id, ...data } = validated.data;
@@ -100,10 +95,7 @@ export async function DELETE(req: Request) {
     const validated = deleteProgramSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 }
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const { id } = validated.data;

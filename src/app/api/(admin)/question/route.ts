@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
 import { prepareQuestion, questionBodySchema } from "@/libs/question-validation";
 import { z } from "zod";
+import { fieldErrorResponse, validationErrorResponse } from "@/libs/api-errors";
 
 const createQuestionSchema = questionBodySchema.extend({
   examId: z.string("Exam tidak valid").min(1, "Exam tidak valid"),
@@ -17,10 +18,7 @@ export async function POST(req: Request) {
     const validated = createQuestionSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 },
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const { examId, ...input } = validated.data;
@@ -34,7 +32,9 @@ export async function POST(req: Request) {
     // 🔥 VALIDASI + SANITASI (section, kategori, isi soal, pilihan, audio)
     const prepared = await prepareQuestion(input);
     if (!prepared.ok) {
-      return NextResponse.json({ error: prepared.error }, { status: 400 });
+      return prepared.field
+        ? fieldErrorResponse(prepared.field, prepared.error)
+        : NextResponse.json({ error: prepared.error }, { status: 400 });
     }
     const p = prepared.value;
 

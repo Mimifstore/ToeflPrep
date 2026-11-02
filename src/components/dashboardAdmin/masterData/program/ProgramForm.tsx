@@ -6,6 +6,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { uploadImage } from "@/libs/upload-image";
 import { ImagePlus, X, ArrowLeft, Home, ChevronRight } from "lucide-react";
+import FormField, { fieldA11y, inputClass } from "@/components/Ui/FormField";
+import Busy from "@/components/Ui/Busy";
+import { Skeleton } from "@/components/Ui/Skeleton";
+import { useFieldErrors } from "@/hooks/useFieldErrors";
+import { readApiFailure } from "@/libs/form-errors";
 
 type ProgramFormProps = {
   mode: "create" | "edit";
@@ -22,6 +27,7 @@ export default function ProgramForm({ mode, programId }: ProgramFormProps) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(mode === "edit");
   const [error, setError] = useState("");
+  const { errors, show, clear } = useFieldErrors();
 
   useEffect(() => {
     if (mode !== "edit" || !programId) return;
@@ -52,6 +58,7 @@ export default function ProgramForm({ mode, programId }: ProgramFormProps) {
 
     setFile(selected);
     setError("");
+    clear("image");
 
     const url = URL.createObjectURL(selected);
     setPreview(url);
@@ -70,7 +77,7 @@ export default function ProgramForm({ mode, programId }: ProgramFormProps) {
       return await uploadImage(file);
     } catch (e: any) {
       console.error("UPLOAD ERROR:", e);
-      setError(e.message || "Upload gambar gagal, coba lagi.");
+      show({ image: e.message || "Upload gambar gagal, coba lagi." });
       return "";
     }
   };
@@ -79,12 +86,12 @@ export default function ProgramForm({ mode, programId }: ProgramFormProps) {
     e.preventDefault();
     setError("");
 
-    if (!name.trim()) {
-      setError("Nama kategori wajib diisi.");
-      return;
-    }
-    if (mode === "create" && !file) {
-      setError("Gambar kategori wajib diunggah.");
+    const found: Record<string, string> = {};
+    if (!name.trim()) found.name = "Nama kategori wajib diisi";
+    else if (name.trim().length > 100) found.name = "Nama kategori maksimal 100 karakter";
+    if (!file && !preview) found.image = "Gambar kategori wajib diunggah";
+    if (Object.keys(found).length > 0) {
+      show(found);
       return;
     }
 
@@ -105,21 +112,22 @@ export default function ProgramForm({ mode, programId }: ProgramFormProps) {
           ? await fetch("/api/program", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name, image }),
+              body: JSON.stringify({ name: name.trim(), image }),
             })
           : await fetch("/api/program", {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 id: programId,
-                name,
+                name: name.trim(),
                 ...(image && { image }),
               }),
             });
 
       if (!res.ok) {
-        const result = await res.json();
-        setError(result.error || "Gagal menyimpan data");
+        const failure = await readApiFailure(res, "Gagal menyimpan data");
+        if (Object.keys(failure.fieldErrors).length > 0) show(failure.fieldErrors);
+        else setError(failure.message);
         setLoading(false);
         return;
       }
@@ -166,39 +174,39 @@ export default function ProgramForm({ mode, programId }: ProgramFormProps) {
         </div>
 
         {fetching ? (
-          <div className="space-y-5 animate-pulse">
-            <div className="h-10 bg-gray-100 rounded-lg" />
-            <div className="h-48 bg-gray-100 rounded-xl" />
-            <div className="h-10 bg-gray-100 rounded-lg w-32" />
+          <div className="space-y-5">
+            <Skeleton className="h-10 rounded-lg" />
+            <Skeleton className="h-48 rounded-xl" />
+            <Skeleton className="h-10 w-32 rounded-lg" />
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form noValidate onSubmit={handleSubmit} className="space-y-5">
             {error ? (
               <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
                 {error}
               </div>
             ) : null}
 
-            <div>
-              <label
-                htmlFor="name"
-                className="mb-1.5 block text-sm font-medium text-gray-700"
-              >
-                Nama Kategori
-              </label>
+            <FormField
+              label="Nama Kategori"
+              required
+              error={errors.name}
+              htmlFor="program-name"
+            >
               <input
-                id="name"
+                {...fieldA11y("program-name", errors.name)}
                 placeholder="Contoh: TOEFL ITP"
-                className="w-full border border-gray-200 px-3.5 py-2.5 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors placeholder:text-gray-400"
+                maxLength={100}
+                className={inputClass(errors.name)}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  clear("name");
+                }}
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Gambar Kategori
-              </label>
+            <FormField label="Gambar Kategori" required error={errors.image}>
 
               {preview ? (
                 <div className="relative w-full h-48 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
@@ -220,7 +228,11 @@ export default function ProgramForm({ mode, programId }: ProgramFormProps) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-48 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-500 transition-colors"
+                  className={`w-full h-48 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-colors ${
+                    errors.image
+                      ? "border-red-400 bg-red-50/40 text-red-400"
+                      : "border-gray-200 text-gray-400 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-500"
+                  }`}
                 >
                   <ImagePlus className="w-7 h-7" />
                   <span className="text-sm font-medium">
@@ -246,7 +258,7 @@ export default function ProgramForm({ mode, programId }: ProgramFormProps) {
                   menggunakan gambar saat ini.
                 </p>
               )}
-            </div>
+            </FormField>
 
             <div className="flex items-center gap-3 pt-2">
               <Link
@@ -261,11 +273,9 @@ export default function ProgramForm({ mode, programId }: ProgramFormProps) {
                 disabled={loading}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading
-                  ? "Menyimpan..."
-                  : isEdit
-                    ? "Update Kategori"
-                    : "Tambah Kategori"}
+                <Busy loading={loading} text="Menyimpan...">
+                  {isEdit ? "Update Kategori" : "Tambah Kategori"}
+                </Busy>
               </button>
             </div>
           </form>

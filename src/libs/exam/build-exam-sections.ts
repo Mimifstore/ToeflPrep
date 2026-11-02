@@ -1,4 +1,7 @@
-// Satu-satunya tempat yang menyusun section + soal + direction untuk halaman ujian peserta.
+// Satu-satunya tempat yang menyusun section + soal + direction untuk halaman ujian peserta
+// (dan halaman pembahasan, supaya urutan yang dilihat sama).
+
+import { seededShuffle } from "@/libs/exam/shuffle";
 
 type RawQuestion = {
   id: string;
@@ -20,13 +23,27 @@ type RawQuestion = {
 
 type SessionItem = { order: number; question: RawQuestion };
 
+type BuildOptions = {
+  /** true = urutan pilihan jawaban diacak, berbeda untuk tiap peserta tapi tetap sama selama sesi. */
+  shuffleAnswers?: boolean;
+  /** Dasar acak (id sesi). Wajib bila shuffleAnswers aktif. */
+  seed?: string;
+};
+
 // Kalau ada beberapa direction berurutan sebelum satu soal, ditampilkan sekaligus
 const DIRECTION_SEPARATOR = '<hr class="my-6 border-gray-200" />';
+
+function orderOptions(q: RawQuestion, opts: BuildOptions) {
+  const sorted = [...q.options].sort((a, b) => a.label.localeCompare(b.label));
+  if (!opts.shuffleAnswers || !opts.seed) return sorted;
+  return seededShuffle(sorted, `${opts.seed}:${q.id}`);
+}
 
 export function buildExamSections(
   items: SessionItem[],
   answerMap: Map<string, string | null>,
   playCountMap: Map<string, number>,
+  options: BuildOptions = {},
 ) {
   const sectionsMap = new Map<string, any>();
   // status direction per section, dibaca berurutan sesuai urutan sesi
@@ -84,9 +101,9 @@ export function buildExamSections(
       directionBefore,
       // direction yang berlaku untuk blok soal ini (buat tombol "Lihat petunjuk")
       passageDirection: st.current,
-      options: [...q.options]
-        .sort((a, b) => a.label.localeCompare(b.label))
-        .map((o) => ({ id: o.label, text: o.text })),
+      // `id` = label asli pilihan (A–D) dan itulah yang disimpan sebagai jawaban.
+      // Huruf yang DITAMPILKAN mengikuti posisi, jadi aman walau urutannya diacak.
+      options: orderOptions(q, options).map((o) => ({ id: o.label, text: o.text })),
     });
   }
 

@@ -1,12 +1,9 @@
 import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
-import { z } from "zod";
-
-const createAnnouncementSchema = z.object({
-  title: z.string().trim().min(1, "Judul wajib diisi").max(200),
-  content: z.string().trim().min(1, "Konten wajib diisi").max(5000),
-});
+import { isBlankHtml, sanitizeRichText } from "@/libs/question-validation";
+import { fieldErrorResponse, validationErrorResponse } from "@/libs/api-errors";
+import { announcementBodySchema } from "@/libs/content-validation";
 
 // 🔥 GET — PUBLIC, dipakai user untuk lihat pengumuman
 export async function GET(req: Request) {
@@ -47,16 +44,20 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const validated = createAnnouncementSchema.safeParse(body);
+    const validated = announcementBodySchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 },
-      );
+      return validationErrorResponse(validated.error);
     }
 
-    const data = await prisma.announcement.create({ data: validated.data });
+    const content = sanitizeRichText(validated.data.content);
+    if (isBlankHtml(content)) {
+      return fieldErrorResponse("content", "Konten wajib diisi");
+    }
+
+    const data = await prisma.announcement.create({
+      data: { ...validated.data, content },
+    });
     return NextResponse.json(data);
   } catch (error) {
     console.error("CREATE ANNOUNCEMENT ERROR:", error);

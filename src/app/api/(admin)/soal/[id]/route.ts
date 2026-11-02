@@ -2,18 +2,8 @@ import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
 import { deleteAudioIfUnused } from "@/libs/audio-storage";
-import { z } from "zod";
-
-const updateExamSchema = z.object({
-  title: z.string().trim().min(1, "Judul wajib diisi").max(200),
-  categoryId: z.string().min(1, "Kategori wajib dipilih"),
-  totalOption: z.coerce.number().int().min(0).max(10),
-  totalSession: z.coerce.number().int().min(0).max(20),
-  useCategoryScore: z.boolean(),
-  scoringType: z.string().optional(),
-  showCorrection: z.boolean(),
-  minScoreToShow: z.coerce.number().int().min(0).nullable().optional(),
-});
+import { fieldErrorResponse, validationErrorResponse } from "@/libs/api-errors";
+import { bankSoalBodySchema } from "@/libs/bank-soal-validation";
 
 export async function GET(
   req: Request,
@@ -58,13 +48,10 @@ export async function PATCH(
 
   try {
     const body = await req.json();
-    const validated = updateExamSchema.safeParse(body);
+    const validated = bankSoalBodySchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 }
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const existing = await prisma.exam.findUnique({
@@ -80,7 +67,7 @@ export async function PATCH(
       select: { id: true },
     });
     if (!program) {
-      return NextResponse.json({ error: "Kategori tidak ditemukan" }, { status: 400 });
+      return fieldErrorResponse("categoryId", "Kategori tidak ditemukan");
     }
 
     const data = await prisma.exam.update({

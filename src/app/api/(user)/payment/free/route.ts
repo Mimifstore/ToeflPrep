@@ -3,6 +3,7 @@ import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { auth } from "../../../../../../auth";
 import { z } from "zod";
+import { checkUjianReadiness } from "@/service/ujian-readiness.service";
 
 const freeAccessSchema = z.object({
   ujianId: z.string().min(1, "ujianId wajib diisi"),
@@ -58,6 +59,15 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { message: "Sudah punya akses" },
         { status: 400 },
+      );
+    }
+
+    // Ujian yang belum lengkap (belum ada soal / durasi) tidak boleh dibuka aksesnya.
+    const readiness = await checkUjianReadiness(ujian);
+    if (!readiness.ready) {
+      return NextResponse.json(
+        { message: "Ujian ini belum tersedia. Silakan coba lagi nanti." },
+        { status: 409 },
       );
     }
 

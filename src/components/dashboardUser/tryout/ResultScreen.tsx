@@ -5,6 +5,12 @@ import { motion } from "framer-motion";
 type Props = {
   data: {
     id: string;
+    /** Nilai kelulusan dari admin. null = ujian tanpa nilai kelulusan. */
+    passingScore: number | null;
+    /** true = lulus, false = belum lulus, null = tidak ada nilai kelulusan. */
+    passed: boolean | null;
+    /** Tombol pembahasan: open = bisa dibuka, locked = skor belum cukup, null = tidak tersedia. */
+    review: { state: "open"; href: string } | { state: "locked"; minScore: number } | null;
     examTitle: string;
     score: number;
     maxScore: number; // 🔥 BARU
@@ -52,6 +58,24 @@ export default function ResultScreen({ data }: Props) {
                 Berikut adalah ringkasan performa kamu pada ujian ini. Cek
                 detail di bawah untuk melihat penilaian per kategori.
               </p>
+
+              {data.passed !== null && data.passingScore !== null && (
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span
+                    data-testid="pass-badge"
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${
+                      data.passed
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-amber-50 text-amber-700"
+                    }`}
+                  >
+                    {data.passed ? "Lulus" : "Belum lulus"}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    Nilai kelulusan {data.passingScore}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* SCORE CIRCLE - animated ring */}
@@ -183,7 +207,15 @@ export default function ResultScreen({ data }: Props) {
         </motion.div>
 
         {/* BACK BUTTON */}
-        <div className="flex justify-center pt-2">
+        <div className="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
+          {data.review?.state === "open" && (
+            <button
+              onClick={() => router.push(data.review!.state === "open" ? data.review!.href : "")}
+              className="rounded-2xl border border-gray-200 bg-white px-8 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              Lihat Pembahasan
+            </button>
+          )}
           <button
             onClick={() => router.push("/user/tryout")}
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl font-semibold transition-colors"
@@ -191,6 +223,12 @@ export default function ResultScreen({ data }: Props) {
             Kembali ke Daftar Tryout
           </button>
         </div>
+
+        {data.review?.state === "locked" && (
+          <p className="text-center text-sm text-gray-400">
+            Pembahasan terbuka untuk skor minimal {data.review.minScore}.
+          </p>
+        )}
       </div>
     </div>
   );

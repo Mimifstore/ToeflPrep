@@ -118,3 +118,9 @@ body {
   width: 100%;
   overflow-x: auto;
 }
+
+/* Editor teks kaya dengan field wajib yang belum diisi */
+.rte-error .ql-toolbar.ql-snow,
+.rte-error .ql-container.ql-snow {
+  border-color: #ef4444;
+}

@@ -7,10 +7,14 @@ import toast from "react-hot-toast";
 import { uploadAudio as uploadAudioFile } from "@/libs/upload-audio";
 
 import SelectField from "@/components/Ui/SelectField";
+import FormField, { fieldA11y, inputClass } from "@/components/Ui/FormField";
 import { typeOptions } from "@/constants/options";
 import Busy from "@/components/Ui/Busy";
+import { useFieldErrors } from "@/hooks/useFieldErrors";
+import { readApiFailure } from "@/libs/form-errors";
+import { OPTION_LABELS, validateQuestionForm } from "@/libs/question-form-validation";
 
-// 🔥 KONSTANTA VALIDASI FILE
+// Validasi file audio
 const ALLOWED_AUDIO_TYPES = [
   "audio/mpeg",
   "audio/mp3",
@@ -20,6 +24,25 @@ const ALLOWED_AUDIO_TYPES = [
   "audio/mp4",
 ];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const INITIAL_FORM = {
+  type: "QUESTION",
+  categoryId: "",
+  sectionId: "",
+  useAudio: "no",
+  audio: null,
+  audioUrl: "",
+  audioLimit: "",
+  timeLimit: "",
+  question: "",
+  direction: "",
+  optionA: "",
+  optionB: "",
+  optionC: "",
+  optionD: "",
+  correctAnswer: "",
+  explanation: "",
+};
 
 export default function CreateQuestionForm({
   examId,
@@ -33,25 +56,9 @@ export default function CreateQuestionForm({
   const [localAudioPreview, setLocalAudioPreview] = useState<string | null>(
     null,
   );
+  const { errors, show, clear, reset } = useFieldErrors();
 
-  const [form, setForm] = useState<any>({
-    type: "QUESTION",
-    categoryId: "",
-    sectionId: "",
-    useAudio: "",
-    audio: null,
-    audioUrl: "",
-    audioLimit: "",
-    timeLimit: "",
-    question: "",
-    direction: "",
-    optionA: "",
-    optionB: "",
-    optionC: "",
-    optionD: "",
-    correctAnswer: "",
-    explanation: "",
-  });
+  const [form, setForm] = useState<any>(INITIAL_FORM);
 
   useEffect(() => {
     fetch("/api/section")
@@ -95,6 +102,9 @@ export default function CreateQuestionForm({
   }, [questionId, defaultValues]);
 
   const handleChange = (key: string, value: any) => {
+    // mengubah isian → penanda merah di kolom itu langsung hilang
+    clear(key);
+
     setForm((prev: any) => {
       if (key === "type") {
         return {
@@ -108,7 +118,7 @@ export default function CreateQuestionForm({
           optionD: "",
           correctAnswer: "",
           explanation: "",
-          useAudio: "",
+          useAudio: "no",
           audio: null,
           audioUrl: "",
           audioLimit: "",
@@ -133,9 +143,15 @@ export default function CreateQuestionForm({
 
       return { ...prev, [key]: value };
     });
+
+    if (key === "type") reset();
+    if (key === "useAudio") {
+      clear("audio");
+      clear("audioLimit");
+    }
   };
 
-  // 🔥 VALIDASI FILE SEBELUM DISIMPAN KE STATE
+  // Validasi file sebelum disimpan ke state
   const handleAudioChange = (file: File | undefined) => {
     if (localAudioPreview) {
       URL.revokeObjectURL(localAudioPreview);
@@ -147,17 +163,15 @@ export default function CreateQuestionForm({
       return;
     }
 
-    // 🔥 VALIDASI TIPE FILE
     if (!ALLOWED_AUDIO_TYPES.includes(file.type)) {
-      toast.error(
-        "Format file tidak didukung. Gunakan MP3, WAV, OGG, atau M4A",
-      );
+      show({
+        audio: "Format file tidak didukung. Gunakan MP3, WAV, OGG, atau M4A",
+      });
       return;
     }
 
-    // 🔥 VALIDASI UKURAN FILE
     if (file.size > MAX_FILE_SIZE) {
-      toast.error("Ukuran file maksimal 10MB");
+      show({ audio: "Ukuran file maksimal 10MB" });
       return;
     }
 
@@ -182,16 +196,11 @@ export default function CreateQuestionForm({
     (c: any) => c.sectionId === form.sectionId,
   );
 
-  // useEffect(() => {
-  //   setForm((prev: any) => ({ ...prev, categoryId: "" }));
-  // }, [form.sectionId]);
-
-  // 🔥 UPLOAD AUDIO — sanitasi nama file + handle error dengan benar
+  // Upload audio: validasi, minta izin ke server, dan upload ada di uploadAudioFile
   const uploadAudio = async (): Promise<string> => {
     if (!form.audio) return "";
 
     try {
-      // validasi, minta izin ke server, dan upload ada di uploadAudioFile
       return await uploadAudioFile(form.audio);
     } catch (e: any) {
       console.error("UPLOAD AUDIO ERROR:", e);
@@ -199,52 +208,36 @@ export default function CreateQuestionForm({
     }
   };
 
-  // 🔥 EDITOR KOSONG = "<p><br></p>", jadi cek isi teksnya, bukan string-nya
-  const isBlankHtml = (html: string) =>
-    !/<img\b/i.test(html || "") &&
-    (html || "")
-      .replace(/<[^>]*>/g, "")
-      .replace(/&nbsp;/g, " ")
-      .trim() === "";
-
-  // 🔥 VALIDASI SEBELUM KIRIM (server tetap memvalidasi ulang)
-  const validateForm = (): string | null => {
-    if (!form.sectionId) return "Section wajib dipilih";
-
-    if (form.type === "DIRECTION") {
-      return isBlankHtml(form.direction) ? "Direction wajib diisi" : null;
-    }
-
-    if (!form.categoryId) return "Kategori Penilaian wajib dipilih";
-    if (isBlankHtml(form.question)) return "Soal wajib diisi";
-    for (const opt of ["A", "B", "C", "D"]) {
-      if (isBlankHtml(form[`option${opt}`]))
-        return `Pilihan ${opt} wajib diisi`;
-    }
-    if (!form.correctAnswer) return "Jawaban wajib dipilih";
-    if (form.useAudio === "yes" && !form.audio && !form.audioUrl) {
-      return 'Pilih file audio, atau ubah "Tambah Audio" menjadi Tidak';
-    }
-    return null;
-  };
-
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+
+    // Semua kolom yang bermasalah ditandai sekaligus (server tetap memvalidasi ulang).
+    const found = validateQuestionForm(form);
+    const count = Object.keys(found).length;
+    if (count > 0) {
+      show(found);
+      toast.error(
+        count === 1
+          ? "Ada 1 isian yang belum benar. Periksa kolom yang ditandai merah."
+          : `Ada ${count} isian yang belum benar. Periksa kolom yang ditandai merah.`,
+      );
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const problem = validateForm();
-      if (problem) {
-        toast.error(problem);
-        setLoading(false);
-        return;
-      }
-
       let audioUrl = form.audioUrl || "";
 
-      // 🔥 UPLOAD — kalau gagal, throw error dan hentikan submit
+      // Upload: kalau gagal, hentikan submit
       if (form.type === "QUESTION" && form.useAudio === "yes" && form.audio) {
-        audioUrl = await uploadAudio();
+        try {
+          audioUrl = await uploadAudio();
+        } catch (err: any) {
+          show({ audio: err.message });
+          toast.error(err.message);
+          return;
+        }
       }
 
       const { audio: _audio, useAudio: _useAudio, ...payload } = form;
@@ -262,8 +255,15 @@ export default function CreateQuestionForm({
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Gagal menyimpan soal");
+        const failure = await readApiFailure(
+          res,
+          isEdit ? "Gagal update soal" : "Gagal menyimpan soal",
+        );
+        const { audioUrl: audioError, ...others } = failure.fieldErrors;
+        const fieldErrors = audioError ? { ...others, audio: audioError } : others;
+        if (Object.keys(fieldErrors).length > 0) show(fieldErrors);
+        toast.error(failure.message);
+        return;
       }
 
       toast.success(
@@ -284,6 +284,7 @@ export default function CreateQuestionForm({
 
   return (
     <form
+      noValidate
       onSubmit={handleSubmit}
       className="bg-white p-6 rounded-2xl shadow border space-y-5"
     >
@@ -298,8 +299,14 @@ export default function CreateQuestionForm({
         </Link>
       </div>
 
+      <p className="text-xs text-gray-500">
+        Kolom bertanda <span className="text-red-500">*</span> wajib diisi.
+      </p>
+
       <SelectField
         label="Section"
+        required
+        error={errors.sectionId}
         value={form.sectionId}
         onChange={(val) => handleChange("sectionId", val)}
         options={sectionOptions}
@@ -312,23 +319,27 @@ export default function CreateQuestionForm({
         options={typeOptions}
       />
 
-      <SelectField
-        label="Kategori Penilaian"
-        value={form.categoryId}
-        disabled={!form.sectionId || filteredCategories.length === 0}
-        onChange={(val) => handleChange("categoryId", val)}
-        options={filteredCategories.map((c: any) => ({
-          value: c.id,
-          label: c.name,
-        }))}
-        placeholder={
-          !form.sectionId
-            ? "Pilih section"
-            : filteredCategories.length === 0
-              ? "Tidak ada kategori"
-              : "[ Pilih ]"
-        }
-      />
+      {form.type === "QUESTION" && (
+        <SelectField
+          label="Kategori Penilaian"
+          required
+          error={errors.categoryId}
+          value={form.categoryId}
+          disabled={!form.sectionId || filteredCategories.length === 0}
+          onChange={(val) => handleChange("categoryId", val)}
+          options={filteredCategories.map((c: any) => ({
+            value: c.id,
+            label: c.name,
+          }))}
+          placeholder={
+            !form.sectionId
+              ? "Pilih section"
+              : filteredCategories.length === 0
+                ? "Tidak ada kategori"
+                : "[ Pilih ]"
+          }
+        />
+      )}
 
       {form.type === "QUESTION" && (
         <>
@@ -344,11 +355,7 @@ export default function CreateQuestionForm({
 
           {form.useAudio === "yes" && (
             <>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  Audio
-                </label>
-
+              <FormField label="Audio" required error={errors.audio} htmlFor="question-audio">
                 {form.audioUrl && !form.audio && (
                   <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 space-y-2">
                     <p className="text-xs text-blue-700 font-medium">
@@ -384,106 +391,104 @@ export default function CreateQuestionForm({
                 )}
 
                 <input
+                  {...fieldA11y("question-audio", errors.audio)}
                   type="file"
                   accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-m4a,audio/mp4"
                   onChange={(e) => handleAudioChange(e.target.files?.[0])}
-                  className="w-full border px-3 py-2 rounded-lg file:mr-3 file:px-3 file:py-1 file:border-0 file:bg-blue-50 file:text-blue-600 file:rounded-md"
+                  className={`w-full border px-3 py-2 rounded-lg file:mr-3 file:px-3 file:py-1 file:border-0 file:bg-blue-50 file:text-blue-600 file:rounded-md ${
+                    errors.audio ? "border-red-500 bg-red-50/40" : ""
+                  }`}
                 />
-                <p className="text-xs text-gray-400">
-                  {form.audioUrl
-                    ? "Kosongkan/jangan pilih file kalau mau tetap pakai audio yang sekarang. Pilih file baru cuma kalau mau GANTI audio."
-                    : "Format: MP3, WAV, OGG, M4A. Maksimal 10MB"}
-                </p>
-              </div>
+                {!errors.audio && (
+                  <p className="text-xs text-gray-400">
+                    {form.audioUrl
+                      ? "Kosongkan/jangan pilih file kalau mau tetap pakai audio yang sekarang. Pilih file baru cuma kalau mau GANTI audio."
+                      : "Format: MP3, WAV, OGG, M4A. Maksimal 10MB"}
+                  </p>
+                )}
+              </FormField>
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  Batasan Audio Bisa Di Putar
-                </label>
+              <FormField
+                label="Batasan Audio Bisa Di Putar"
+                error={errors.audioLimit}
+                htmlFor="question-audioLimit"
+              >
                 <input
+                  {...fieldA11y("question-audioLimit", errors.audioLimit)}
                   type="number"
+                  inputMode="numeric"
+                  min={0}
                   placeholder="Batas putar"
                   value={form.audioLimit}
                   onChange={(e) => handleChange("audioLimit", e.target.value)}
-                  className="w-full border px-3 py-2 rounded-lg"
+                  className={inputClass(errors.audioLimit)}
                 />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  Batas Waktu Menjawab(Detik), Input 0 Jika Tidak Ada Batasan
-                </label>
-                <input
-                  type="number"
-                  placeholder="Waktu (detik)"
-                  value={form.timeLimit}
-                  onChange={(e) => handleChange("timeLimit", e.target.value)}
-                  className="w-full border px-3 py-2 rounded-lg"
-                />
-              </div>
+              </FormField>
             </>
           )}
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Soal</label>
+          <FormField label="Soal" required error={errors.question}>
             <div className="editor-soal">
               <RichTextEditor
                 value={form.question}
                 onChange={(val) => handleChange("question", val)}
+                error={!!errors.question}
               />
             </div>
-          </div>
+          </FormField>
 
-          {["A", "B", "C", "D"].map((opt) => (
-            <div key={opt} className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                Pilihan {opt}
-              </label>
+          {OPTION_LABELS.map((opt) => (
+            <FormField
+              key={opt}
+              label={`Pilihan ${opt}`}
+              required
+              error={errors[`option${opt}`]}
+            >
               <div className="editor-pilihan">
                 <RichTextEditor
                   value={form[`option${opt}`]}
                   onChange={(val) => handleChange(`option${opt}`, val)}
+                  error={!!errors[`option${opt}`]}
                 />
               </div>
-            </div>
+            </FormField>
           ))}
 
           <SelectField
             label="Jawaban"
+            required
+            error={errors.correctAnswer}
             value={form.correctAnswer}
             onChange={(val) => handleChange("correctAnswer", val)}
-            options={[
-              { value: "A", label: "A" },
-              { value: "B", label: "B" },
-              { value: "C", label: "C" },
-              { value: "D", label: "D" },
-            ]}
+            options={OPTION_LABELS.map((opt) => ({ value: opt, label: opt }))}
           />
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">
-              Pembahasan
-            </label>
+          <FormField
+            label="Pembahasan"
+            error={errors.explanation}
+            hint="Opsional. Tampil ke peserta di halaman pembahasan jika 'Tampilkan Jawaban' diaktifkan pada ujian."
+          >
             <div className="editor-pembahasan">
               <RichTextEditor
                 value={form.explanation}
                 onChange={(val) => handleChange("explanation", val)}
+                error={!!errors.explanation}
               />
             </div>
-          </div>
+          </FormField>
         </>
       )}
 
       {form.type === "DIRECTION" && (
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Direction</label>
+        <FormField label="Direction" required error={errors.direction}>
           <div className="editor-direction">
             <RichTextEditor
               value={form.direction}
               onChange={(val) => handleChange("direction", val)}
+              error={!!errors.direction}
             />
           </div>
-        </div>
+        </FormField>
       )}
 
       <button
@@ -491,7 +496,9 @@ export default function CreateQuestionForm({
         disabled={loading}
         className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
       >
-        <Busy loading={loading} text="Menyimpan...">Submit</Busy>
+        <Busy loading={loading} text="Menyimpan...">
+          Submit
+        </Busy>
       </button>
     </form>
   );

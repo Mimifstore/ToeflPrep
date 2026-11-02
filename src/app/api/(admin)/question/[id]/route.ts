@@ -7,6 +7,7 @@ import {
   prepareQuestion,
   questionBodySchema,
 } from "@/libs/question-validation";
+import { fieldErrorResponse, validationErrorResponse } from "@/libs/api-errors";
 
 export async function GET(
   req: Request,
@@ -100,10 +101,7 @@ export async function PATCH(
     const validated = questionBodySchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 },
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const existing = await prisma.question.findUnique({
@@ -121,7 +119,9 @@ export async function PATCH(
       currentAudioUrl: existing.audioUrl,
     });
     if (!prepared.ok) {
-      return NextResponse.json({ error: prepared.error }, { status: 400 });
+      return prepared.field
+        ? fieldErrorResponse(prepared.field, prepared.error)
+        : NextResponse.json({ error: prepared.error }, { status: 400 });
     }
     const p = prepared.value;
 

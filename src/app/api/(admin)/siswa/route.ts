@@ -1,20 +1,8 @@
 import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
-import { z } from "zod";
-
-const updateSiswaSchema = z.object({
-  id: z.string().min(1, "ID wajib diisi"),
-  name: z.string().trim().min(2, "Nama minimal 2 karakter").max(100).optional(),
-  phone: z.string().trim().max(20).optional().nullable(),
-  address: z.string().trim().max(255).optional().nullable(),
-  gender: z.enum(["Laki-laki", "Perempuan"]).optional().nullable(),
-  province: z.string().trim().max(100).optional().nullable(),
-  city: z.string().trim().max(100).optional().nullable(),
-  district: z.string().trim().max(100).optional().nullable(),
-  village: z.string().trim().max(100).optional().nullable(),
-  isMember: z.boolean().optional(),
-});
+import { validationErrorResponse } from "@/libs/api-errors";
+import { siswaUpdateSchema } from "@/libs/siswa-validation";
 
 export async function GET() {
   const { error } = await requireAdmin();
@@ -43,13 +31,10 @@ export async function PATCH(req: Request) {
 
   try {
     const body = await req.json();
-    const validated = updateSiswaSchema.safeParse(body);
+    const validated = siswaUpdateSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { message: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 }
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const { id, ...data } = validated.data;

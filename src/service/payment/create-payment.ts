@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { prisma } from "@/libs/prisma";
 import { snap } from "@/libs/midtrans";
+import { checkUjianReadiness } from "@/service/ujian-readiness.service";
 
 type Props = {
   ujianId: string;
@@ -55,6 +56,12 @@ export async function createPayment({ ujianId, userId }: Props) {
 
   if (existingAccess) {
     throw new PaymentError("Anda sudah memiliki akses ujian ini");
+  }
+
+  // Jangan terima pembayaran untuk ujian yang belum bisa dikerjakan (belum ada soal / durasi belum diatur).
+  const readiness = await checkUjianReadiness(ujian);
+  if (!readiness.ready) {
+    throw new PaymentError("Ujian ini belum tersedia. Silakan coba lagi nanti.", 409);
   }
 
   //  PAKAI ULANG TRANSAKSI YANG MASIH BERJALAN (PENDING atau WAITING).

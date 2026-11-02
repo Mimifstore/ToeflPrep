@@ -63,6 +63,7 @@ export default async function Page({ params }: Props) {
     session.sessionQuestions,
     answerMap,
     audioTrackMap,
+    { shuffleAnswers: session.ujian.shuffleAnswers, seed: session.id },
   );
 
   const data = {

@@ -1,18 +1,8 @@
 import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
-import { z } from "zod";
-
-const createExamSchema = z.object({
-  title: z.string().trim().min(1, "Judul wajib diisi").max(200),
-  categoryId: z.string().min(1, "Kategori wajib dipilih"),
-  totalOption: z.coerce.number().int().min(0).max(10).default(0),
-  totalSession: z.coerce.number().int().min(0).max(20).default(0),
-  useCategoryScore: z.boolean().default(true),
-  scoringType: z.string().default("PER_KATEGORI"),
-  showCorrection: z.boolean().default(false),
-  minScoreToShow: z.coerce.number().int().min(0).nullable().optional(),
-});
+import { fieldErrorResponse, validationErrorResponse } from "@/libs/api-errors";
+import { bankSoalBodySchema } from "@/libs/bank-soal-validation";
 
 export async function GET() {
   const { error } = await requireAdmin();
@@ -36,24 +26,21 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const validated = createExamSchema.safeParse(body);
+    const validated = bankSoalBodySchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { message: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 }
-      );
+      return validationErrorResponse(validated.error);
     }
 
-    const { minScoreToShow, showCorrection, ...rest } = validated.data;
-
-    const exam = await prisma.exam.create({
-      data: {
-        ...rest,
-        showCorrection,
-        minScoreToShow: showCorrection ? minScoreToShow ?? 0 : null,
-      },
+    const program = await prisma.program.findUnique({
+      where: { id: validated.data.categoryId },
+      select: { id: true },
     });
+    if (!program) {
+      return fieldErrorResponse("categoryId", "Kategori tidak ditemukan");
+    }
+
+    const exam = await prisma.exam.create({ data: validated.data });
 
     return NextResponse.json(exam);
   } catch (error) {

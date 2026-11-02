@@ -3,6 +3,8 @@ import { prisma } from "@/libs/prisma";
 import ResultScreen from "@/components/dashboardUser/tryout/ResultScreen";
 import { auth } from "../../../../../../../../auth";
 import { calculateResult } from "@/service/exam/calculate-result.service";
+import { getPassStatus } from "@/libs/exam/review-access";
+import { getReviewAccessForResult } from "@/service/exam/get-review.service";
 
 type Props = {
   params: Promise<{ resultId: string }>;
@@ -59,8 +61,25 @@ export default async function Page({ params }: Props) {
     }
   }
 
+  // Status lulus dan akses pembahasan mengikuti pengaturan ujian dari admin.
+  const ujian = result.session.ujian;
+  const pass = getPassStatus(result.score, ujian.passingScore);
+  const reviewAccess = await getReviewAccessForResult({
+    showAnswer: ujian.showAnswer,
+    score: result.score,
+    questionBankId: ujian.questionBankId,
+  });
+
   const data = {
     id: result.id,
+    passingScore: pass.hasThreshold ? ujian.passingScore : null,
+    passed: pass.passed,
+    review:
+      reviewAccess.state === "open"
+        ? ({ state: "open", href: `/user/tryout/result/${result.id}/review` } as const)
+        : reviewAccess.state === "locked"
+          ? ({ state: "locked", minScore: reviewAccess.minScore } as const)
+          : null,
     examTitle: result.session.ujian.title,
     score: result.score,
     maxScore: details.maxScore,

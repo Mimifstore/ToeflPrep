@@ -2,6 +2,7 @@ import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
 import { z } from "zod";
+import { validationErrorResponse } from "@/libs/api-errors";
 
 const mappingSchema = z.object({
   minScore: z.coerce.number().int().min(0),
@@ -61,10 +62,7 @@ export async function PUT(
     const validated = updateCategorySchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 },
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const existing = await prisma.categoryScore.findUnique({

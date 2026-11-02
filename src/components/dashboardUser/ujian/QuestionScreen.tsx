@@ -128,13 +128,15 @@ export default function QuestionScreen({
       {question.options.length > 0 && (
         <div className="space-y-3">
           {question.options.map((option, index) => {
-            const optionValue = String.fromCharCode(65 + index);
-            const isSelected = selectedAnswer === optionValue;
+            // Huruf di layar = posisi (A, B, C, D). Jawaban yang disimpan = label asli pilihan,
+            // jadi tetap benar walau urutan pilihan diacak.
+            const optionLetter = String.fromCharCode(65 + index);
+            const isSelected = selectedAnswer === option.id;
 
             return (
               <button
                 key={option.id}
-                onClick={() => onAnswer(optionValue)}
+                onClick={() => onAnswer(option.id)}
                 className={`w-full text-left border rounded-2xl px-5 py-4 transition-all duration-200
                   ${
                     isSelected
@@ -154,7 +156,7 @@ export default function QuestionScreen({
                     {saving && isSelected ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      optionValue
+                      optionLetter
                     )}
                   </div>
 

@@ -2,6 +2,7 @@ import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
 import { z } from "zod";
+import { validationErrorResponse } from "@/libs/api-errors";
 
 const mappingSchema = z.object({
   minScore: z.coerce.number().int().min(0),
@@ -52,10 +53,7 @@ export async function POST(req: Request) {
     const validated = createCategorySchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 },
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const { mappings, ...rest } = validated.data;
@@ -84,10 +82,7 @@ export async function DELETE(req: Request) {
     const validated = deleteCategorySchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 },
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const { id } = validated.data;

@@ -2,11 +2,8 @@ import { prisma } from "@/libs/prisma";
 
 export type SessionSection = { id: string; title: string };
 
-type TimedUjian = {
-  listeningTime: number | null;
-  structureTime: number | null;
-  readingTime: number | null;
-};
+// Logika durasi per section ada di section-minutes.ts (tanpa database, dipakai juga oleh form admin).
+export { getSectionMinutes } from "./section-minutes";
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const MAX_CACHE = 500;
@@ -35,26 +32,4 @@ export async function getSessionSections(
   }
 
   return sections;
-}
-
-// Durasi (menit) sebuah section. Dicocokkan lewat judul section, bukan urutan,
-// supaya ujian dengan 2 section (misal Listening dan Reading) memakai waktu yang benar.
-// Judul yang tidak dikenali memakai urutan Listening, Structure, Reading.
-export function getSectionMinutes(
-  ujian: TimedUjian,
-  title: string,
-  index: number,
-): number | null {
-  const t = title.toLowerCase();
-  let minutes: number | null | undefined;
-
-  if (t.includes("listening")) minutes = ujian.listeningTime;
-  else if (t.includes("structure")) minutes = ujian.structureTime;
-  else if (t.includes("reading")) minutes = ujian.readingTime;
-  else
-    minutes = [ujian.listeningTime, ujian.structureTime, ujian.readingTime][
-      index
-    ];
-
-  return typeof minutes === "number" && minutes > 0 ? minutes : null;
 }

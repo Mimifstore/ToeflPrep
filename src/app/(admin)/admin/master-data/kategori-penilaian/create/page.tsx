@@ -4,6 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import Busy from "@/components/Ui/Busy";
+import { FieldError, fieldA11y } from "@/components/Ui/FormField";
+import { useFieldErrors } from "@/hooks/useFieldErrors";
+import { FIELD_ERROR_ATTR, readApiFailure } from "@/libs/form-errors";
 
 // 🔥 TABEL KONVERSI TOEFL ITP STANDAR
 const TOEFL_TABLES: Record<string, Record<number, number>> = {
@@ -270,6 +273,17 @@ const TOEIC_TABLES: Record<string, Record<number, number>> = {
 
 const LIST_URL = "/admin/master-data/kategori-penilaian";
 
+// Final Score harus bilangan bulat >= 0 (kolom yang dikosongkan tidak dianggap 0)
+const isValidScore = (v: unknown) =>
+  v !== "" && v !== null && v !== undefined && Number.isInteger(Number(v)) && Number(v) >= 0;
+
+const fieldClass = (error?: string) =>
+  `border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
+    error
+      ? "border-red-500 bg-red-50/40 focus:ring-red-200"
+      : "border-gray-200 focus:ring-blue-500"
+  }`;
+
 function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
   const router = useRouter();
   const isEdit = !!categoryId;
@@ -284,6 +298,7 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
   const [mappings, setMappings] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(isEdit);
+  const { errors, show, clear } = useFieldErrors();
 
   const fetchSections = async () => {
     try {
@@ -410,24 +425,36 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
     }));
 
     setMappings(data);
+    clear("mappings");
     toast.success("Mapping berhasil digenerate sesuai standar");
   };
 
   const handleSubmit = async () => {
-    try {
-      if (!name) {
-        toast.error("Nama wajib diisi");
-        return;
-      }
-      if (!sectionId) {
-        toast.error("Section wajib dipilih");
-        return;
-      }
-      if (mappings.length === 0) {
-        toast.error("Generate mapping dulu");
-        return;
-      }
+    // Semua isian yang belum benar ditandai sekaligus (server tetap memvalidasi ulang).
+    const found: Record<string, string> = {};
+    if (!name.trim()) found.name = "Nama penilaian wajib diisi";
+    else if (name.trim().length > 100) found.name = "Nama penilaian maksimal 100 karakter";
+    if (!sectionId) found.sectionId = "Section wajib dipilih";
 
+    if (mappings.length === 0) {
+      found.mappings = "Klik Generate Mapping dulu untuk membuat tabel konversi skor";
+    } else {
+      const bad = mappings
+        .map((m, i) => ({ m, i }))
+        .filter(({ m }) => !isValidScore(m.finalScore));
+      if (bad.length > 0) {
+        const rows = bad.slice(0, 5).map(({ i }) => i + 1).join(", ");
+        found.mappings = `Final Score harus bilangan bulat 0 atau lebih (cek baris ${rows}${bad.length > 5 ? ", …" : ""})`;
+        bad.forEach(({ i }) => (found[`finalScore-${i}`] = "invalid"));
+      }
+    }
+    if (Object.keys(found).length > 0) {
+      show(found);
+      toast.error("Ada isian yang belum benar. Periksa kolom yang ditandai merah.");
+      return;
+    }
+
+    try {
       setLoading(true);
 
       const res = await fetch(
@@ -435,13 +462,23 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
         {
           method: isEdit ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ program, name, sectionId, mappings }),
+          body: JSON.stringify({
+            program,
+            name: name.trim(),
+            sectionId,
+            mappings: mappings.map((m) => ({ ...m, finalScore: Number(m.finalScore) })),
+          }),
         },
       );
 
       if (!res.ok) {
-        const result = await res.json().catch(() => ({}));
-        throw new Error(result.error || "");
+        const failure = await readApiFailure(
+          res,
+          isEdit ? "Gagal memperbarui kategori" : "Gagal membuat kategori",
+        );
+        if (Object.keys(failure.fieldErrors).length > 0) show(failure.fieldErrors);
+        toast.error(failure.message);
+        return;
       }
 
       toast.success(
@@ -450,10 +487,7 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
       router.push(LIST_URL);
     } catch (error: any) {
       console.error(error);
-      toast.error(
-        error?.message ||
-          (isEdit ? "Gagal memperbarui kategori" : "Gagal membuat kategori"),
-      );
+      toast.error(isEdit ? "Gagal memperbarui kategori" : "Gagal membuat kategori");
     } finally {
       setLoading(false);
     }
@@ -508,11 +542,15 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
           </div>
 
           {/* NAME */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">
-              Nama Penilaian
+          <div
+            className="space-y-2"
+            {...(errors.name ? { [FIELD_ERROR_ATTR]: "true" } : {})}
+          >
+            <label htmlFor="kp-name" className="text-sm font-semibold text-gray-700">
+              Nama Penilaian <span className="text-red-500">*</span>
             </label>
             <input
+              {...fieldA11y("kp-name", errors.name)}
               placeholder={
                 program === "TOEFL"
                   ? "Contoh: Listening Score"
@@ -521,9 +559,14 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
                     : "Contoh: Nilai Akhir"
               }
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxLength={100}
+              onChange={(e) => {
+                setName(e.target.value);
+                clear("name");
+              }}
+              className={`w-full ${fieldClass(errors.name)}`}
             />
+            {errors.name && <FieldError id="kp-name-error" message={errors.name} />}
             {/* HINT */}
             {(program === "TOEFL" || program === "TOEIC") && (
               <p className="text-xs text-gray-400">
@@ -539,15 +582,22 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
           </div>
 
           {/* SECTION */}
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-semibold text-gray-700">
-              Section
+          <div
+            className="space-y-2 md:col-span-2"
+            {...(errors.sectionId ? { [FIELD_ERROR_ATTR]: "true" } : {})}
+          >
+            <label htmlFor="kp-section" className="text-sm font-semibold text-gray-700">
+              Section <span className="text-red-500">*</span>
             </label>
             <div className="flex flex-col md:flex-row gap-3">
               <select
+                {...fieldA11y("kp-section", errors.sectionId)}
                 value={sectionId}
-                onChange={(e) => setSectionId(e.target.value)}
-                className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => {
+                  setSectionId(e.target.value);
+                  clear("sectionId");
+                }}
+                className={`flex-1 ${fieldClass(errors.sectionId)}`}
               >
                 <option value="">Pilih Section</option>
                 {sections.map((section) => (
@@ -565,6 +615,9 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
                 Tambah Section
               </button>
             </div>
+            {errors.sectionId && (
+              <FieldError id="kp-section-error" message={errors.sectionId} />
+            )}
           </div>
         </div>
 
@@ -587,6 +640,12 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
           </button>
         </div>
 
+        {errors.mappings && (
+          <div {...{ [FIELD_ERROR_ATTR]: "true" }}>
+            <FieldError message={errors.mappings} />
+          </div>
+        )}
+
         {/* TABLE */}
         {mappings.length > 0 && (
           <div className="overflow-auto border border-gray-100 rounded-2xl">
@@ -608,13 +667,25 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
                     <td className="p-3">
                       <input
                         type="number"
+                        inputMode="numeric"
+                        min={0}
                         value={m.finalScore}
+                        aria-invalid={errors[`finalScore-${i}`] ? true : undefined}
                         onChange={(e) => {
                           const newData = [...mappings];
-                          newData[i].finalScore = Number(e.target.value);
+                          newData[i] = {
+                            ...newData[i],
+                            finalScore: e.target.value === "" ? "" : Number(e.target.value),
+                          };
                           setMappings(newData);
+                          clear(`finalScore-${i}`);
+                          clear("mappings");
                         }}
-                        className="w-24 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className={`w-24 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 ${
+                          errors[`finalScore-${i}`]
+                            ? "border-red-500 bg-red-50/40 focus:ring-red-200"
+                            : "border-gray-200 focus:ring-blue-500"
+                        }`}
                       />
                     </td>
                   </tr>

@@ -5,7 +5,35 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import SelectField from "@/components/Ui/SelectField";
+import FormField, { fieldA11y, inputClass } from "@/components/Ui/FormField";
 import Busy from "@/components/Ui/Busy";
+import { FormSkeleton } from "@/components/Ui/Skeleton";
+import { useFieldErrors } from "@/hooks/useFieldErrors";
+import { fieldErrorsFromZod, readApiFailure } from "@/libs/form-errors";
+import { bankSoalBodySchema } from "@/libs/bank-soal-validation";
+
+type FormState = {
+  title: string;
+  categoryId: string;
+  totalOption: string | number;
+  totalSession: string | number;
+  minScoreToShow: string | number;
+  // Tidak tampil di form, nilai lama dipertahankan saat menyimpan.
+  useCategoryScore: boolean;
+  scoringType: string;
+  showCorrection: boolean;
+};
+
+const EMPTY: FormState = {
+  title: "",
+  categoryId: "",
+  totalOption: "",
+  totalSession: "",
+  minScoreToShow: "",
+  useCategoryScore: true,
+  scoringType: "PER_KATEGORI",
+  showCorrection: false,
+};
 
 export default function CreateSoalForm() {
   const router = useRouter();
@@ -14,17 +42,10 @@ export default function CreateSoalForm() {
 
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(!!id);
+  const { errors, show, clear } = useFieldErrors();
 
-  const [form, setForm] = useState({
-    title: "",
-    categoryId: "",
-    totalOption: "",
-    totalSession: "",
-    useCategoryScore: "",
-    scoringType: "",
-    showCorrection: "",
-    minScoreToShow: "",
-  });
+  const [form, setForm] = useState<FormState>(EMPTY);
 
   useEffect(() => {
     fetch("/api/program")
@@ -41,43 +62,47 @@ export default function CreateSoalForm() {
         setForm({
           title: data.title || "",
           categoryId: data.categoryId || "",
-          totalOption: data.totalOption || "",
-          totalSession: data.totalSession || "",
-          useCategoryScore: String(data.useCategoryScore),
-          scoringType: data.scoringType || "",
-          showCorrection: String(data.showCorrection),
-          minScoreToShow: data.minScoreToShow || "",
+          totalOption: data.totalOption ?? "",
+          totalSession: data.totalSession ?? "",
+          minScoreToShow: data.minScoreToShow ?? "",
+          useCategoryScore: data.useCategoryScore ?? true,
+          scoringType: data.scoringType || "PER_KATEGORI",
+          showCorrection: data.showCorrection ?? false,
         });
-      });
+      })
+      .finally(() => setFetching(false));
   }, [id]);
 
-  const handleChange = (key: string, value: any) => {
-    setForm((prev: any) => ({ ...prev, [key]: value }));
+  const handleChange = (key: keyof FormState, value: any) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    clear(key);
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const parsed = bankSoalBodySchema.safeParse(form);
+    if (!parsed.success) {
+      show(fieldErrorsFromZod(parsed.error));
+      toast.error("Ada isian yang belum benar. Periksa kolom yang ditandai merah.");
+      return;
+    }
 
     try {
       setLoading(true);
 
-      const url = id ? `/api/soal/${id}` : "/api/soal";
-      const method = id ? "PATCH" : "POST";
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch(id ? `/api/soal/${id}` : "/api/soal", {
+        method: id ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          useCategoryScore: form.useCategoryScore === "true",
-          showCorrection: form.showCorrection === "true",
-          minScoreToShow: form.minScoreToShow
-            ? Number(form.minScoreToShow)
-            : null,
-        }),
+        body: JSON.stringify(parsed.data),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const failure = await readApiFailure(res, "Gagal menyimpan soal");
+        if (Object.keys(failure.fieldErrors).length > 0) show(failure.fieldErrors);
+        toast.error(failure.message);
+        return;
+      }
 
       toast.success(id ? "Soal berhasil diupdate" : "Soal berhasil dibuat");
 
@@ -90,8 +115,11 @@ export default function CreateSoalForm() {
     }
   };
 
+  if (fetching) return <FormSkeleton fields={5} />;
+
   return (
     <form
+      noValidate
       onSubmit={handleSubmit}
       className="bg-white p-4 md:p-6 rounded-2xl shadow border space-y-5"
     >
@@ -111,124 +139,87 @@ export default function CreateSoalForm() {
         </Link>
       </div>
 
+      <p className="text-xs text-gray-500">
+        Kolom bertanda <span className="text-red-500">*</span> wajib diisi.
+      </p>
+
       {/* FORM */}
       <div className="space-y-4">
-        {/* KATEGORI */}
         <SelectField
           label="Kategori"
+          required
+          error={errors.categoryId}
           value={form.categoryId}
           onChange={(val) => handleChange("categoryId", val)}
-          options={[
-            { value: "", label: "[ Pilih ]" },
-            ...categories.map((c: any) => ({
-              value: c.id,
-              label: c.name,
-            })),
-          ]}
+          options={categories.map((c: any) => ({ value: c.id, label: c.name }))}
         />
 
-        {/* JUDUL */}
-        <div>
-          <label className="text-sm font-medium text-gray-700">
-            Judul Soal
-          </label>
+        <FormField label="Judul Soal" required error={errors.title} htmlFor="soal-title">
           <input
+            {...fieldA11y("soal-title", errors.title)}
             value={form.title}
+            maxLength={200}
             onChange={(e) => handleChange("title", e.target.value)}
             placeholder="Masukkan judul soal"
-            className="w-full border px-3 py-2 rounded-lg text-sm 
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={inputClass(errors.title)}
           />
-        </div>
+        </FormField>
 
-        {/* JUMLAH PILIHAN */}
-        <div>
-          <label className="text-sm font-medium text-gray-700">
-            Jumlah Pilihan
-          </label>
+        <FormField
+          label="Jumlah Pilihan"
+          error={errors.totalOption}
+          htmlFor="soal-totalOption"
+          hint="Hanya informasi yang tampil di daftar soal"
+        >
           <input
+            {...fieldA11y("soal-totalOption", errors.totalOption)}
             type="number"
+            inputMode="numeric"
+            min={0}
+            max={10}
             value={form.totalOption}
             onChange={(e) => handleChange("totalOption", e.target.value)}
-            placeholder="Masukkan jumlah pilihan"
-            className="w-full border px-3 py-2 rounded-lg text-sm 
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Contoh: 4"
+            className={inputClass(errors.totalOption)}
           />
-        </div>
+        </FormField>
 
-        {/* JUMLAH SESI */}
-        <div>
-          <label className="text-sm font-medium text-gray-700">
-            Jumlah Sesi
-          </label>
+        <FormField
+          label="Jumlah Sesi"
+          error={errors.totalSession}
+          htmlFor="soal-totalSession"
+          hint="Hanya informasi yang tampil di daftar soal"
+        >
           <input
+            {...fieldA11y("soal-totalSession", errors.totalSession)}
             type="number"
+            inputMode="numeric"
+            min={0}
+            max={20}
             value={form.totalSession}
             onChange={(e) => handleChange("totalSession", e.target.value)}
-            placeholder="Masukkan jumlah sesi"
-            disabled={form.useCategoryScore === "true"}
-            className="w-full border px-3 py-2 rounded-lg text-sm 
-            disabled:bg-gray-100
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Contoh: 3"
+            className={inputClass(errors.totalSession)}
           />
-        </div>
+        </FormField>
 
-        {/* KATEGORI PENILAIAN */}
-        <SelectField
-          label="Tambahkan Kategori Penilaian"
-          value={form.useCategoryScore}
-          onChange={(val) => handleChange("useCategoryScore", val)}
-          options={[
-            { value: "", label: "[ Pilih ]" },
-            { value: "true", label: "Ya" },
-            { value: "false", label: "Tidak" },
-          ]}
-        />
-
-        {/* JENIS PENILAIAN */}
-        <SelectField
-          label="Jenis Penilaian"
-          value={form.scoringType}
-          onChange={(val) => handleChange("scoringType", val)}
-          options={[
-            { value: "", label: "[ Pilih ]" },
-            {
-              value: "PER_KATEGORI",
-              label: "Dihitung Per Kategori Penilaian",
-            },
-          ]}
-        />
-
-        {/* KOREKSI */}
-        <SelectField
-          label="Tampilkan Koreksi Jawaban"
-          value={form.showCorrection}
-          onChange={(val) => handleChange("showCorrection", val)}
-          options={[
-            { value: "", label: "[ Pilih ]" },
-            { value: "true", label: "Ya" },
-            { value: "false", label: "Tidak" },
-          ]}
-        />
-
-        {/* CONDITIONAL */}
-        {form.showCorrection === "true" && (
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Minimal Nilai untuk Melihat Jawaban
-            </label>
-            <input
-              type="number"
-              value={form.minScoreToShow}
-              onChange={(e) =>
-                handleChange("minScoreToShow", e.target.value)
-              }
-              placeholder="Masukkan minimal nilai"
-              className="w-full border px-3 py-2 rounded-lg text-sm 
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        )}
+        <FormField
+          label="Skor Minimal untuk Melihat Pembahasan"
+          error={errors.minScoreToShow}
+          htmlFor="soal-minScoreToShow"
+          hint="Kosongkan agar semua peserta bisa melihat. Pembahasan hanya tampil jika 'Tampilkan Jawaban' diaktifkan di pengaturan ujian."
+        >
+          <input
+            {...fieldA11y("soal-minScoreToShow", errors.minScoreToShow)}
+            type="number"
+            inputMode="numeric"
+            min={0}
+            value={form.minScoreToShow}
+            onChange={(e) => handleChange("minScoreToShow", e.target.value)}
+            placeholder="Contoh: 400"
+            className={inputClass(errors.minScoreToShow)}
+          />
+        </FormField>
       </div>
 
       {/* ACTION */}
@@ -238,7 +229,9 @@ export default function CreateSoalForm() {
           disabled={loading}
           className="w-full md:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50"
         >
-          <Busy loading={loading} text="Menyimpan...">{id ? "Update" : "Simpan"}</Busy>
+          <Busy loading={loading} text="Menyimpan...">
+            {id ? "Update" : "Simpan"}
+          </Busy>
         </button>
       </div>
     </form>

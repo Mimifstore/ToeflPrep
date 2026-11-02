@@ -1,15 +1,9 @@
 import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
-import { z } from "zod";
-
-const createFaqSchema = z.object({
-  question: z.string().trim().min(1, "Pertanyaan wajib diisi").max(500),
-  answer: z.string().trim().min(1, "Jawaban wajib diisi").max(5000),
-  category: z.string().trim().max(100).optional().nullable(),
-  order: z.coerce.number().int().min(0).default(0),
-  isActive: z.boolean().default(true),
-});
+import { isBlankHtml, sanitizeRichText } from "@/libs/question-validation";
+import { fieldErrorResponse, validationErrorResponse } from "@/libs/api-errors";
+import { faqBodySchema } from "@/libs/content-validation";
 
 // 🔥 GET — PUBLIC, tidak perlu auth (FAQ memang untuk ditampilkan ke semua orang)
 export async function GET() {
@@ -32,16 +26,18 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const validated = createFaqSchema.safeParse(body);
+    const validated = faqBodySchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 }
-      );
+      return validationErrorResponse(validated.error);
     }
 
-    const data = await prisma.faq.create({ data: validated.data });
+    const answer = sanitizeRichText(validated.data.answer);
+    if (isBlankHtml(answer)) {
+      return fieldErrorResponse("answer", "Jawaban wajib diisi");
+    }
+
+    const data = await prisma.faq.create({ data: { ...validated.data, answer } });
     return NextResponse.json(data);
   } catch (error) {
     console.error("CREATE FAQ ERROR:", error);

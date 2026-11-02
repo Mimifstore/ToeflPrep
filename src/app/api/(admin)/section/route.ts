@@ -2,6 +2,7 @@ import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
 import { z } from "zod";
+import { validationErrorResponse } from "@/libs/api-errors";
 
 const createSectionSchema = z.object({
   title: z.string().trim().min(1, "Title wajib diisi").max(100),
@@ -33,10 +34,7 @@ export async function POST(req: Request) {
     const validated = createSectionSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        { error: validated.error.issues[0]?.message || "Input tidak valid" },
-        { status: 400 }
-      );
+      return validationErrorResponse(validated.error);
     }
 
     const { title, examId } = validated.data;

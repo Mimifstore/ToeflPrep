@@ -122,6 +122,8 @@ type Props = {
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
+  /** true = border editor merah (field wajib yang belum diisi). */
+  error?: boolean;
 };
 
 // Dipindah ke luar komponen biar gak ikut re-create tiap render
@@ -155,6 +157,7 @@ export default function RichTextEditor({
   value,
   onChange,
   placeholder = "",
+  error = false,
 }: Props) {
   const cleanHtml = (html: string) => {
     return html
@@ -191,7 +194,11 @@ export default function RichTextEditor({
   );
 
   return (
-    <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+    <div
+      className={`bg-white rounded-xl border shadow-sm overflow-hidden ${
+        error ? "rte-error border-red-500" : ""
+      }`}
+    >
       <div className="max-w-full overflow-x-auto">
         <ReactQuill
           theme="snow"

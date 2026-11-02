@@ -169,9 +169,13 @@ export type PreparedQuestion = {
 
 type Result =
   | { ok: true; value: PreparedQuestion }
-  | { ok: false; error: string };
+  | { ok: false; error: string; field?: string };
 
-const fail = (error: string): Result => ({ ok: false, error });
+const fail = (error: string, field?: string): Result => ({
+  ok: false,
+  error,
+  field,
+});
 
 export async function prepareQuestion(
   data: QuestionBody,
@@ -182,14 +186,14 @@ export async function prepareQuestion(
     where: { id: data.sectionId },
     select: { id: true },
   });
-  if (!section) return fail("Section tidak ditemukan");
+  if (!section) return fail("Section tidak ditemukan", "sectionId");
 
   // ----- DIRECTION -----
   if (data.type === "DIRECTION") {
     const direction = sanitizeRichText(data.direction ?? "");
-    if (isBlankHtml(direction)) return fail("Direction wajib diisi");
+    if (isBlankHtml(direction)) return fail("Direction wajib diisi", "direction");
     if (direction.length > MAX_RICH_TEXT)
-      return fail("Direction terlalu panjang");
+      return fail("Direction terlalu panjang", "direction");
 
     return {
       ok: true,
@@ -210,36 +214,36 @@ export async function prepareQuestion(
   }
 
   // ----- QUESTION -----
-  if (!data.categoryId) return fail("Kategori wajib dipilih");
+  if (!data.categoryId) return fail("Kategori wajib dipilih", "categoryId");
 
   const category = await prisma.categoryScore.findUnique({
     where: { id: data.categoryId },
     select: { sectionId: true },
   });
-  if (!category) return fail("Kategori tidak ditemukan");
+  if (!category) return fail("Kategori tidak ditemukan", "categoryId");
   if (category.sectionId !== data.sectionId) {
-    return fail("Kategori tidak sesuai dengan section yang dipilih");
+    return fail("Kategori tidak sesuai dengan section yang dipilih", "categoryId");
   }
 
-  if (!data.correctAnswer) return fail("Jawaban wajib dipilih");
+  if (!data.correctAnswer) return fail("Jawaban wajib dipilih", "correctAnswer");
 
   const questionText = sanitizeRichText(data.question ?? "");
-  if (isBlankHtml(questionText)) return fail("Soal wajib diisi");
-  if (questionText.length > MAX_RICH_TEXT) return fail("Soal terlalu panjang");
+  if (isBlankHtml(questionText)) return fail("Soal wajib diisi", "question");
+  if (questionText.length > MAX_RICH_TEXT) return fail("Soal terlalu panjang", "question");
 
   const options: { label: string; text: string }[] = [];
   for (const label of ["A", "B", "C", "D"] as const) {
     const text = sanitizeRichText(data[`option${label}`] ?? "");
-    if (isBlankHtml(text)) return fail(`Pilihan ${label} wajib diisi`);
+    if (isBlankHtml(text)) return fail(`Pilihan ${label} wajib diisi`, `option${label}`);
     if (text.length > MAX_OPTION_TEXT)
-      return fail(`Pilihan ${label} terlalu panjang`);
+      return fail(`Pilihan ${label} terlalu panjang`, `option${label}`);
     options.push({ label, text });
   }
 
   const explanationRaw = sanitizeRichText(data.explanation ?? "");
   const explanation = isBlankHtml(explanationRaw) ? null : explanationRaw;
   if (explanation && explanation.length > MAX_RICH_TEXT) {
-    return fail("Penjelasan terlalu panjang");
+    return fail("Penjelasan terlalu panjang", "explanation");
   }
 
   // AUDIO: URL yang tidak berubah dari data lama dibiarkan (data lama mungkin pakai alamat lain)
@@ -251,6 +255,7 @@ export async function prepareQuestion(
   ) {
     return fail(
       "URL audio tidak valid. Upload audio lewat form agar tersimpan di penyimpanan sendiri",
+      "audioUrl",
     );
   }
 
