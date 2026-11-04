@@ -136,8 +136,6 @@ export default function ExamLayout({ data }: Props) {
           body: JSON.stringify({ sessionId: data.id, type }),
         });
         const response = await res.json();
-
-        // 🔥 BARU — kalau server bilang batas exit attempts udah kelewat,
         // ujian otomatis diselesaikan (sudah di-grade di server), redirect ke hasil.
         if (response.forceSubmit) {
           toast.error(
