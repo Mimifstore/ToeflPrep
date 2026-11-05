@@ -3,7 +3,8 @@
 import { Card } from "@/components/Ui/Card";
 import { Home, ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type FAQ = {
   id: string;
@@ -13,6 +14,19 @@ type FAQ = {
 
 export default function FaqTable({ faqs }: { faqs: FAQ[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const targetId = useSearchParams().get("faq");
+
+  // Dibuka dari hasil pencarian (/user/faq?faq=<id>): buka pertanyaan itu dan gulir ke sana.
+  useEffect(() => {
+    if (!targetId) return;
+    const index = faqs.findIndex((faq) => faq.id === targetId);
+    if (index === -1) return;
+
+    setOpenIndex(index);
+    document
+      .getElementById(`faq-${targetId}`)
+      ?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [targetId, faqs]);
 
   return (
     <div className="p-4 md:p-6 shadow-md">
@@ -39,7 +53,8 @@ export default function FaqTable({ faqs }: { faqs: FAQ[] }) {
             return (
               <div
                 key={faq.id || index}
-                className={`border rounded-xl transition-colors duration-200 ${
+                id={`faq-${faq.id}`}
+                className={`scroll-mt-24 border rounded-xl transition-colors duration-200 ${
                   isOpen
                     ? "border-blue-200"
                     : "border-gray-100 hover:border-gray-200"

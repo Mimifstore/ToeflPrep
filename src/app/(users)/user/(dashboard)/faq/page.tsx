@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import FaqTable from "@/components/dashboardUser/faq/FaqTable";
 
 type FAQ = {
@@ -27,5 +27,10 @@ export default function FAQPage() {
     fetchFaqs();
   }, []);
 
-  return <FaqTable faqs={faqs} />;
+  // FaqTable membaca ?faq=<id> (useSearchParams), yang wajib dibungkus Suspense.
+  return (
+    <Suspense fallback={null}>
+      <FaqTable faqs={faqs} />
+    </Suspense>
+  );
 }
