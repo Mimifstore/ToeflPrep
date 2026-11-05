@@ -1,6 +1,12 @@
 import crypto from "crypto";
 import { prisma } from "@/libs/prisma";
 import { logAudit } from "@/libs/audit-log";
+import {
+  notifyPaymentDuplicate,
+  notifyPaymentFailed,
+  notifyPaymentSuccess,
+  type PaymentFailureReason,
+} from "@/service/notification.service";
 
 type MidtransCallbackBody = {
   order_id: string;
@@ -153,6 +159,16 @@ export async function handlePaymentCallback({ body }: Props) {
       });
     }
 
+    // Notifikasi best-effort (tidak pernah melempar error), jadi tidak mengganggu callback Midtrans.
+    // ALREADY_DONE = callback ulang, sudah pernah diberi tahu.
+    const event = {
+      userId: transaction.userId,
+      ujianId: transaction.ujianId,
+      transactionId: transaction.id,
+    };
+    if (outcome === "OK") await notifyPaymentSuccess(event);
+    else if (outcome === "DUPLICATE") await notifyPaymentDuplicate(event);
+
     return true;
   }
 
@@ -167,10 +183,20 @@ export async function handlePaymentCallback({ body }: Props) {
 
   // KEDALUWARSA / DIBATALKAN / DITOLAK — tidak menimpa transaksi yang sudah SUCCESS
   if (["expire", "cancel", "deny"].includes(transaction_status)) {
-    await prisma.transaction.updateMany({
+    const failed = await prisma.transaction.updateMany({
       where: { id: transaction.id, status: { in: OPEN_STATUSES } },
       data: { status: "FAILED", paymentResponse: body },
     });
+
+    // Hanya kalau statusnya benar-benar berubah (callback ulang tidak mengirim dua kali).
+    if (failed.count > 0) {
+      await notifyPaymentFailed({
+        userId: transaction.userId,
+        ujianId: transaction.ujianId,
+        transactionId: transaction.id,
+        reason: transaction_status as PaymentFailureReason,
+      });
+    }
     return true;
   }
 

@@ -4,6 +4,7 @@ import { requireAdmin } from "@/libs/api-auth";
 import { isBlankHtml, sanitizeRichText } from "@/libs/question-validation";
 import { fieldErrorResponse, validationErrorResponse } from "@/libs/api-errors";
 import { announcementBodySchema } from "@/libs/content-validation";
+import { removeAnnouncementNotifications } from "@/service/notification.service";
 
 export async function GET(
   req: Request,
@@ -51,6 +52,8 @@ export async function DELETE(
     }
 
     await prisma.announcement.delete({ where: { id: params.id } });
+    // Hapus notifikasinya juga supaya tidak menyisakan tautan mati
+    await removeAnnouncementNotifications(params.id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE ANNOUNCEMENT ERROR:", error);

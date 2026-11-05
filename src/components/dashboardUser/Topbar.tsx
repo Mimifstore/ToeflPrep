@@ -3,6 +3,7 @@
 import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { UserShellSession } from "@/types/user-shell";
 import GlobalSearch from "./topbar/GlobalSearch";
+import NotificationBell from "./topbar/NotificationBell";
 import UserMenu from "./topbar/UserMenu";
 
 type TopbarProps = {
@@ -61,9 +62,10 @@ export default function Topbar({
           </div>
         </div>
 
-        {/* RIGHT: search + akun */}
+        {/* RIGHT: search + notifikasi + akun */}
         <div className="flex shrink-0 items-center gap-2">
           <GlobalSearch />
+          <NotificationBell />
           {session && <UserMenu user={session.user} logoutAction={logoutAction} />}
         </div>
       </div>

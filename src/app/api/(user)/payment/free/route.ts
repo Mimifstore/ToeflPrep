@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { auth } from "../../../../../../auth";
 import { z } from "zod";
 import { checkUjianReadiness } from "@/service/ujian-readiness.service";
+import { notifyFreeAccess } from "@/service/notification.service";
 
 const freeAccessSchema = z.object({
   ujianId: z.string().min(1, "ujianId wajib diisi"),
@@ -97,6 +98,9 @@ export async function POST(req: Request) {
       // klik ganda / dua tab: request lain sudah memberi akses, jadi ini juga berhasil
       if (error?.code !== "P2002") throw error;
     }
+
+    // Klik ganda tidak membuat notifikasi ganda (kunci anti-duplikat per siswa dan ujian).
+    await notifyFreeAccess({ userId, ujianId });
 
     return NextResponse.json({ success: true });
   } catch (error) {

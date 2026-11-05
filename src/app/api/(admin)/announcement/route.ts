@@ -4,6 +4,7 @@ import { requireAdmin } from "@/libs/api-auth";
 import { isBlankHtml, sanitizeRichText } from "@/libs/question-validation";
 import { fieldErrorResponse, validationErrorResponse } from "@/libs/api-errors";
 import { announcementBodySchema } from "@/libs/content-validation";
+import { notifyAnnouncement } from "@/service/notification.service";
 
 // GET — PUBLIC, dipakai user untuk lihat pengumuman
 export async function GET(req: Request) {
@@ -58,6 +59,9 @@ export async function POST(req: Request) {
     const data = await prisma.announcement.create({
       data: { ...validated.data, content },
     });
+    // Siarkan ke semua siswa aktif (best-effort)
+    await notifyAnnouncement({ id: data.id, title: data.title, content: data.content });
+
     return NextResponse.json(data);
   } catch (error) {
     console.error("CREATE ANNOUNCEMENT ERROR:", error);

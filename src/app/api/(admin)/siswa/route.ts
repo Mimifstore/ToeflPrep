@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
 import { validationErrorResponse } from "@/libs/api-errors";
 import { siswaUpdateSchema } from "@/libs/siswa-validation";
+import { notifyMemberChanged } from "@/service/notification.service";
 
 export async function GET() {
   const { error } = await requireAdmin();
@@ -49,6 +50,11 @@ export async function PATCH(req: Request) {
       where: { id },
       data,
     });
+
+    // Status member berubah → beri tahu siswa (best-effort)
+    if (data.isMember !== undefined && data.isMember !== existing.isMember) {
+      await notifyMemberChanged({ userId: existing.userId, isMember: data.isMember });
+    }
 
     return NextResponse.json(siswa);
   } catch (error) {

@@ -2,6 +2,7 @@ import { prisma } from "@/libs/prisma";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/libs/api-auth";
 import { z } from "zod";
+import { notifyPaymentFailed, notifyPaymentSuccess } from "@/service/notification.service";
 
 const updateStatusSchema = z.object({
   status: z.enum(["PENDING", "WAITING", "SUCCESS", "FAILED"], {
@@ -99,6 +100,15 @@ export async function PATCH(
         },
       });
     }
+
+    // Beri tahu siswa (best-effort, tidak menggagalkan update)
+    const event = {
+      userId: existing.userId,
+      ujianId: existing.ujianId,
+      transactionId: existing.id,
+    };
+    if (status === "SUCCESS") await notifyPaymentSuccess(event);
+    else if (status === "FAILED") await notifyPaymentFailed({ ...event, reason: "failed" });
 
     return NextResponse.json(updated);
   } catch (error) {

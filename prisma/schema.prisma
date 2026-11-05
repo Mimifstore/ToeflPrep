@@ -50,6 +50,7 @@ model User {
   phone         String?
   siswa         Siswa?
   auditLogs     AuditLog[]
+  notifications Notification[]
   examSessions  ExamSession[]
   transactions  Transaction[]
   examAccesses  UserExamAccess[]
@@ -367,4 +368,23 @@ enum TransactionStatus {
   WAITING
   SUCCESS
   FAILED
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  /// PAYMENT_SUCCESS, PAYMENT_FAILED, ANNOUNCEMENT, dst. Daftar lengkap ada di src/types/notification.ts
+  type      String
+  title     String
+  message   String
+  /// Halaman tujuan saat notifikasi diklik
+  href      String?
+  /// Kunci anti-duplikat: kejadian yang sama (mis. callback Midtrans terkirim ulang) tidak membuat notifikasi dua kali
+  dedupeKey String?   @unique
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }
