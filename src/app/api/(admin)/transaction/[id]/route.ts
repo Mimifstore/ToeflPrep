@@ -56,7 +56,7 @@ export async function PATCH(
 
     const { status } = validated.data;
 
-    // 🔥 CEK TRANSAKSI ADA
+    // CEK TRANSAKSI ADA
     const existing = await prisma.transaction.findUnique({
       where: { id: params.id },
     });
@@ -65,7 +65,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Transaksi tidak ditemukan" }, { status: 404 });
     }
 
-    // 🔥 CEGAH UPDATE TRANSAKSI YANG SUDAH FINAL
+    // CEGAH UPDATE TRANSAKSI YANG SUDAH FINAL
     if (existing.status === "SUCCESS" || existing.status === "FAILED") {
       return NextResponse.json(
         { error: "Transaksi sudah final, tidak dapat diubah" },
@@ -81,7 +81,7 @@ export async function PATCH(
       },
     });
 
-    // 🔥 Kalau SUCCESS, buat UserExamAccess otomatis
+    // Kalau SUCCESS, buat UserExamAccess otomatis
     if (status === "SUCCESS") {
       await prisma.userExamAccess.upsert({
         where: {

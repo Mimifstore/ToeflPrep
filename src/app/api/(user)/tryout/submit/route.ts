@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   if (rateLimitCheck.error) return rateLimitCheck.error;
 
   try {
-    // 🔥 AUTH
+    // AUTH
     const sessionAuth = await auth();
 
     if (!sessionAuth?.user?.id) {
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       });
       if (userLimit.error) return userLimit.error;
 
-    // 🔥 BODY
+    // BODY
     const json = await req.json();
 
     const validated =
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
 
     const body = validated.data;
 
-    // 🔥 SERVICE
+    // SERVICE
     const result =
       await submitExamService({
         sessionId: body.sessionId,
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
       error,
     );
 
-    // 🔥 CUSTOM
+    // CUSTOM
     if (
       error.message ===
       "FORBIDDEN"

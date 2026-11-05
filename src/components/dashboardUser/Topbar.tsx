@@ -1,103 +1,69 @@
 "use client";
 
-import { Menu, User2Icon, LogOut, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import type { UserShellSession } from "@/types/user-shell";
+import UserMenu from "./topbar/UserMenu";
 
 type TopbarProps = {
   onOpenSidebar: () => void;
-  session: any;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+  session: UserShellSession;
   logoutAction: () => void;
 };
 
 export default function Topbar({
   onOpenSidebar,
+  collapsed,
+  onToggleCollapsed,
   session,
   logoutAction,
 }: TopbarProps) {
-  const [openUser, setOpenUser] = useState(false);
+  const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-white border-b shadow-sm">
-      
-      <div className="flex items-center justify-between px-4 md:px-6 py-3">
-
+    <header className="sticky top-0 z-30 w-full border-b bg-white">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-6">
         {/* LEFT */}
-        <div className="flex items-center gap-3">
-
+        <div className="flex min-w-0 items-center gap-3">
+          {/* Mobile: buka drawer */}
           <button
+            type="button"
             onClick={onOpenSidebar}
-            className="md:hidden w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition"
+            aria-label="Buka menu"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 transition hover:bg-gray-200 md:hidden"
           >
-            <Menu className="w-5 h-5 text-gray-700" />
+            <Menu className="h-5 w-5 text-gray-700" />
           </button>
 
-          {/* BRAND / TITLE */}
-          <div className="hidden md:block">
-            <h1 className="text-sm font-semibold text-gray-800">
-              Dashboard
-            </h1>
-            <p className="text-xs text-gray-500">
-              Ringkasan Aktiifitas Kamu
+          {/* Desktop: lipat / lebarkan sidebar */}
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            aria-label={collapsed ? "Lebarkan sidebar" : "Ciutkan sidebar"}
+            aria-controls="user-sidebar"
+            aria-expanded={!collapsed}
+            title={`${collapsed ? "Lebarkan" : "Ciutkan"} sidebar (Ctrl+B)`}
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 md:flex"
+          >
+            <ToggleIcon className="h-5 w-5" />
+          </button>
+
+          {/* TITLE */}
+          <div className="hidden min-w-0 md:block">
+            <p className="truncate text-sm font-semibold text-gray-800">
+              Dashboard Siswa
+            </p>
+            <p className="truncate text-xs text-gray-500">
+              Latihan, hasil, dan transaksi kamu
             </p>
           </div>
-
         </div>
 
-        {/* RIGHT */}
-        {session && (
-          <div className="relative flex items-center gap-3">
-
-            {/* USER BUTTON */}
-            <button
-              onClick={() => setOpenUser(!openUser)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition"
-            >
-
-              {/* AVATAR */}
-              <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center border">
-                <User2Icon className="w-5 h-5 text-blue-600" />
-              </div>
-
-              {/* INFO (DESKTOP ONLY) */}
-              <div className="hidden md:block text-left">
-                <div className="text-sm font-semibold text-gray-800 leading-tight">
-                  {session.user.name}
-                </div>
-                <div className="text-xs text-gray-500 capitalize">
-                  {session.user.role}
-                </div>
-              </div>
-
-              <ChevronDown className="w-4 h-4 text-gray-500 hidden md:block" />
-            </button>
-
-            {/* DROPDOWN */}
-            {openUser && (
-              <div className="absolute right-0 top-12 w-44 bg-white border shadow-lg rounded-xl overflow-hidden">
-                
-                <div className="px-3 py-2 text-xs text-gray-500 border-b">
-                  Signed in as
-                  <div className="font-semibold text-gray-800">
-                    {session.user.name}
-                  </div>
-                </div>
-
-                <form action={logoutAction}>
-                  <button
-                    type="submit"
-                    className="w-full flex items-center font-semibold gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    <LogOut size={10} strokeWidth={2.5} />
-                    Logout
-                  </button>
-                </form>
-
-              </div>
-            )}
-
-          </div>
-        )}
-
+        {/* RIGHT: akun */}
+        <div className="flex shrink-0 items-center gap-2">
+          {session && <UserMenu user={session.user} logoutAction={logoutAction} />}
+        </div>
       </div>
     </header>
   );

@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 OWNERSHIP CHECK — WAJIB
+    // OWNERSHIP CHECK — WAJIB
     if (session.userId !== sessionAuth.user.id) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 SUDAH PINDAH (klik ganda / request ulang): jangan geser lagi
+    // SUDAH PINDAH (klik ganda / request ulang): jangan geser lagi
     const from = validated.data.fromSection ?? session.currentSection;
     if (session.currentSection !== from) {
       return NextResponse.json({
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // 🔥 BATAS ATAS — section berikutnya harus benar-benar ada
+    // BATAS ATAS — section berikutnya harus benar-benar ada
     const sections = await getSessionSections(session.id);
     const nextSection = from + 1;
 
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 WAKTU SECTION BERIKUTNYA (dicocokkan lewat judul section)
+    // WAKTU SECTION BERIKUTNYA (dicocokkan lewat judul section)
     let expiredAt: Date | undefined;
     if (session.ujian.timeType === "PER_SECTION") {
       const minutes = getSectionMinutes(

@@ -10,14 +10,14 @@ import { startExamSchema } from "@/app/validations/exam/start.schema";
 
 export async function POST(req: Request) {
   try {
-    // 🔥 AUTH
+    // AUTH
     const sessionAuth = await auth();
 
     if (!sessionAuth?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // 🔥 BODY
+    // BODY
     let body;
     try {
       body = await req.json();
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     const { ujianId } = validated.data;
     const userId = sessionAuth.user.id;
 
-    // 🔥 CHECK ACCESS
+    // CHECK ACCESS
     const allowed = await hasExamAccess({ userId, ujianId });
 
     if (!allowed) {
@@ -47,12 +47,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 CHECK ONGOING SESSION
+    // CHECK ONGOING SESSION
     const existingSession = await prisma.examSession.findFirst({
       where: { userId, ujianId, status: "ONGOING" },
     });
 
-    // 🔥 RETURN EXISTING
+    // RETURN EXISTING
     if (existingSession) {
       return NextResponse.json({
         success: true,
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // 🔥 GET UJIAN
+    // GET UJIAN
     const ujian = await prisma.ujian.findUnique({ where: { id: ujianId } });
 
     if (!ujian) {
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 CREATE SESSION
+    // CREATE SESSION
     let examSession;
     try {
       examSession = await createExamSession({ userId, ujian });
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
       throw error;
     }
 
-    // 🔥 KLIK GANDA / DUA TAB: kalau ada sesi aktif yang lebih dulu dibuat,
+    // KLIK GANDA / DUA TAB: kalau ada sesi aktif yang lebih dulu dibuat,
     // pakai itu dan hapus yang baru. Urutannya pasti (createdAt lalu id), jadi dua
     // request bersamaan selalu sepakat sesi mana yang dipertahankan.
     const earliest = await prisma.examSession.findFirst({

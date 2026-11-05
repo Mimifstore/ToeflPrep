@@ -44,7 +44,7 @@ export async function importSoalService(
   file: Buffer,
   examId: string,
 ): Promise<ImportResult> {
-  // 🔥 PARSE EXCEL (rumus, HTML, dan gaya sel tidak dibaca; baris dibatasi)
+  // PARSE EXCEL (rumus, HTML, dan gaya sel tidak dibaca; baris dibatasi)
   let workbook: XLSX.WorkBook;
   try {
     workbook = XLSX.read(file, {
@@ -76,7 +76,7 @@ export async function importSoalService(
   });
   if (table.length < 2) throw new ImportFileError("File tidak berisi data soal");
 
-  // 🔥 HEADER (dinormalisasi) + CEK KOLOM WAJIB
+  // HEADER (dinormalisasi) + CEK KOLOM WAJIB
   const colIndex = new Map<string, number>();
   table[0].forEach((h, i) => {
     const k = key(h);
@@ -91,7 +91,7 @@ export async function importSoalService(
   const get = (row: unknown[], k: string) =>
     colIndex.has(k) ? cell(row[colIndex.get(k)!]) : "";
 
-  // 🔥 DATA PEMBANDING (beberapa query sekali jalan, bukan satu per baris)
+  // DATA PEMBANDING (beberapa query sekali jalan, bukan satu per baris)
   const [sections, categories, existingQuestions, lastOrders] = await Promise.all([
     prisma.section.findMany({ select: { id: true, title: true } }),
     prisma.categoryScore.findMany({ select: { id: true, name: true, sectionId: true } }),
@@ -146,7 +146,7 @@ export async function importSoalService(
   const questionRows: any[] = [];
   const optionRows: any[] = [];
 
-  // 🔥 VALIDASI SEMUA BARIS DULU (belum ada yang disimpan)
+  // VALIDASI SEMUA BARIS DULU (belum ada yang disimpan)
   for (let i = 1; i < table.length; i++) {
     const row = table[i];
     const rowNumber = i + 1; // baris Excel (baris 1 = header)
@@ -312,7 +312,7 @@ export async function importSoalService(
 
   if (questionRows.length === 0) throw new ImportFileError("File tidak berisi baris soal");
 
-  // 🔥 SIMPAN SEKALIGUS: semua berhasil atau tidak ada yang masuk (2 query)
+  // SIMPAN SEKALIGUS: semua berhasil atau tidak ada yang masuk (2 query)
   await prisma.$transaction([
     prisma.question.createMany({
       data: questionRows.map((q) => ({ examId, ...q })),

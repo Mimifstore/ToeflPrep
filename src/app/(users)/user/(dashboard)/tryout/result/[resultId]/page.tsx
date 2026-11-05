@@ -19,7 +19,7 @@ type ResultDetails = {
 export default async function Page({ params }: Props) {
   const { resultId } = await params;
 
-  // 🔥 AUTH
+  // AUTH
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -34,10 +34,10 @@ export default async function Page({ params }: Props) {
 
   if (!result) return notFound();
 
-  // 🔥 VALIDASI OWNER
+  // VALIDASI OWNER
   if (result.session.userId !== session.user.id) return notFound();
 
-  // 🔥 RINCIAN (kategori, skor maksimal, program): pakai yang tersimpan saat submit.
+  // RINCIAN (kategori, skor maksimal, program): pakai yang tersimpan saat submit.
   // Hasil lama yang belum punya rincian dihitung sekali, lalu disimpan.
   let details = result.details as ResultDetails | null;
 

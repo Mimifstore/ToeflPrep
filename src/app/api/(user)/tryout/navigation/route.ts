@@ -5,7 +5,7 @@ import { navigationService } from "@/service/exam/navigation.service";
 
 export async function POST(req: Request) {
   try {
-    // 🔥 AUTH
+    // AUTH
     const sessionAuth = await auth();
 
     if (!sessionAuth?.user?.id) {
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 BODY
+    // BODY
     const json = await req.json();
 
     const validated = navigationSchema.safeParse(json);
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
     const body = validated.data;
 
-    // 🔥 SERVICE
+    // SERVICE
     await navigationService({
       sessionId: body.sessionId,
 
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.log("NAVIGATION ERROR:", error);
 
-    // 🔥 CUSTOM
+    // CUSTOM
     if (error.message === "QUESTION_NOT_FOUND") {
       return NextResponse.json(
         {

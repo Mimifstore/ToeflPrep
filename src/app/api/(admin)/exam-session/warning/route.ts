@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
     const { sessionId, type } = validated.data;
 
-    // 🔥 SERTAKAN ujian.maxExitAttempts BUAT CEK BATAS
+    // SERTAKAN ujian.maxExitAttempts BUAT CEK BATAS
     const session = await prisma.examSession.findUnique({
       where: { id: sessionId },
       include: { ujian: { select: { maxExitAttempts: true } } },
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    // 🔥 CEGAH UPDATE KALAU SESSION SUDAH SELESAI
+    // CEGAH UPDATE KALAU SESSION SUDAH SELESAI
     if (session.status !== "ONGOING") {
       return NextResponse.json(
         { message: "Session sudah selesai" },
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // 🔥 BARU — ENFORCEMENT maxExitAttempts
+    // BARU — ENFORCEMENT maxExitAttempts
     // Sebelumnya field ini cuma dekoratif (gak pernah dicek). Sekarang:
     // total percobaan keluar (tab + fullscreen) dibandingin ke batas admin.
     // maxExitAttempts = 0 berarti admin gak ngaktifin fitur ini (unlimited).

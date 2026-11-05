@@ -36,7 +36,7 @@ export async function GET(req: Request) {
       },
     });
 
-    // 🔥 BUILD DATA
+    // BUILD DATA
     const data = sessions.map((s) => {
       const categoryMap = new Map<
         string,
@@ -91,11 +91,11 @@ export async function GET(req: Request) {
       };
     });
 
-    // 🔥 GENERATE HTML
+    // GENERATE HTML
     let html = "";
 
     if (type === "rekap") {
-      // 🔥 PDF REKAP — semua peserta dalam satu tabel
+      // PDF REKAP — semua peserta dalam satu tabel
       html = `
         <!DOCTYPE html>
         <html>
@@ -172,7 +172,7 @@ export async function GET(req: Request) {
         </html>
       `;
     } else {
-      // 🔥 PDF SERTIFIKAT — satu halaman per peserta
+      // PDF SERTIFIKAT — satu halaman per peserta
       html = `
         <!DOCTYPE html>
         <html>

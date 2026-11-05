@@ -29,7 +29,7 @@ export async function PATCH(req: Request) {
 
     const { userId, role } = validated.data;
 
-    // 🔥 CEGAH ADMIN UBAH ROLE DIRI SENDIRI (mencegah self-demote tidak sengaja)
+    // CEGAH ADMIN UBAH ROLE DIRI SENDIRI (mencegah self-demote tidak sengaja)
     if (userId === session!.user.id) {
       return NextResponse.json(
         { message: "Tidak dapat mengubah role akun sendiri" },

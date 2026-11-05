@@ -17,18 +17,18 @@ type Props = {
 export default async function ExamPage({
   params,
 }: Props) {
-  // 🔥 PARAMS
+  // PARAMS
   const { ujianId } =
     await params;
 
-  // 🔥 SESSION
+  // SESSION
   const session = await auth();
 
   if (!session?.user?.id) {
     redirect("/login");
   }
 
-  // 🔥 USER
+  // USER
   const user =
     await prisma.user.findUnique({
       where: {
@@ -40,7 +40,7 @@ export default async function ExamPage({
     redirect("/login");
   }
 
-  // 🔥 ACCESS CHECK
+  // ACCESS CHECK
   const allowed =
     await hasExamAccess({
       userId: session.user.id,
@@ -48,12 +48,12 @@ export default async function ExamPage({
       ujianId,
     });
 
-  // 🔥 BLOCK
+  // BLOCK
   if (!allowed) {
     redirect("/user/tryout");
   }
 
-  // 🔥 GET UJIAN
+  // GET UJIAN
   const ujian =
     await prisma.ujian.findUnique({
       where: {

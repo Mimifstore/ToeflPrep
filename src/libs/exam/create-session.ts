@@ -13,7 +13,7 @@ type Props = {
 export class ExamNotReadyError extends Error {}
 
 export async function createExamSession({ userId, ujian }: Props) {
-  // 🔥 URUT BERDASARKAN Section.order (sebelumnya berdasarkan id section yang acak).
+  // URUT BERDASARKAN Section.order (sebelumnya berdasarkan id section yang acak).
   // Soal tanpa section tidak pernah tampil ke peserta, jadi tidak ikut sesi.
   const questions = await prisma.question.findMany({
     where: { examId: ujian.questionBankId, sectionId: { not: null } },
@@ -39,7 +39,7 @@ export async function createExamSession({ userId, ujian }: Props) {
     const result: typeof questions = [];
 
     for (const group of sectionGroups.values()) {
-      // 🔥 Pecah 1 section jadi blok-blok kecil, dibatasi tiap ketemu DIRECTION
+      // Pecah 1 section jadi blok-blok kecil, dibatasi tiap ketemu DIRECTION
       type Block = {
         direction: (typeof questions)[0] | null;
         questions: typeof questions;
@@ -62,7 +62,7 @@ export async function createExamSession({ userId, ujian }: Props) {
       }
       if (hasStarted) blocks.push(currentBlock);
 
-      // 🔥 Susun ulang: tiap blok, direction-nya (kalau ada) tetap di
+      // Susun ulang: tiap blok, direction-nya (kalau ada) tetap di
       // depan, soal di dalamnya diacak — TAPI urutan antar blok gak diubah
       for (const block of blocks) {
         if (block.direction) result.push(block.direction);
@@ -73,7 +73,7 @@ export async function createExamSession({ userId, ujian }: Props) {
     finalQuestions = result;
   }
 
-  // 🔥 WAKTU: durasi kosong atau 0 ditolak (dulu ujian langsung kedaluwarsa)
+  // WAKTU: durasi kosong atau 0 ditolak (dulu ujian langsung kedaluwarsa)
   let expiredAt: Date | null = null;
 
   if (ujian.timeType === "SINGLE") {
@@ -95,7 +95,7 @@ export async function createExamSession({ userId, ujian }: Props) {
     expiredAt = getExpiredTime(minutes);
   }
 
-  // 🔥 SESI DAN SOAL-SOALNYA DIBUAT DALAM SATU OPERASI (atomik): tidak ada
+  // SESI DAN SOAL-SOALNYA DIBUAT DALAM SATU OPERASI (atomik): tidak ada
   // sesi kosong yang tertinggal kalau pembuatan soal gagal.
   const firstQuestion = finalQuestions.find((q) => q.type === "QUESTION");
 

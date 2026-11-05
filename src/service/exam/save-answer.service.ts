@@ -24,7 +24,7 @@ export async function saveAnswerService({
     userId,
   });
 
-  // 🔥 VALIDATE QUESTION IN SESSION
+  // VALIDATE QUESTION IN SESSION
   const sessionQuestion = await prisma.examSessionQuestion.findFirst({
     where: {
       sessionId,
@@ -39,7 +39,7 @@ export async function saveAnswerService({
     throw new Error("QUESTION_NOT_FOUND");
   }
 
-  // 🔥 HANYA SOAL DI SECTION YANG SEDANG BERJALAN.
+  // HANYA SOAL DI SECTION YANG SEDANG BERJALAN.
   // Tanpa ini, jawaban untuk section yang waktunya sudah habis masih bisa
   // dikirim lewat API langsung selama ujian berlangsung.
   const sections = await getSessionSections(sessionId);
@@ -63,7 +63,7 @@ export async function saveAnswerService({
     throw new Error("INVALID_OPTION");
   }
 
-  // 🔥 UPSERT ANSWER
+  // UPSERT ANSWER
   const saved = await prisma.examAnswer.upsert({
     where: {
       sessionId_questionId: {

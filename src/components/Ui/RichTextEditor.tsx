@@ -36,19 +36,19 @@
 //       const file = input.files?.[0];
 //       if (!file) return;
 
-//       // 🔥 VALIDASI TIPE FILE
+//       // VALIDASI TIPE FILE
 //       if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
 //         toast.error("Format gambar tidak didukung. Gunakan JPG, PNG, WEBP, atau GIF");
 //         return;
 //       }
 
-//       // 🔥 VALIDASI UKURAN FILE
+//       // VALIDASI UKURAN FILE
 //       if (file.size > MAX_IMAGE_SIZE) {
 //         toast.error("Ukuran gambar maksimal 5MB");
 //         return;
 //       }
 
-//       // 🔥 SANITASI NAMA FILE
+//       // SANITASI NAMA FILE
 //       const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
 //       const fileName = `editor-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
 

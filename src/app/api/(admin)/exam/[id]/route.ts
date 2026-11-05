@@ -7,7 +7,7 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  // 🔥 AUTH — hanya ADMIN
+  // AUTH — hanya ADMIN
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -88,7 +88,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Ujian tidak ditemukan" }, { status: 404 });
     }
 
-    // 🔥 CEK APAKAH SUDAH ADA TRANSAKSI/SESSION
+    // CEK APAKAH SUDAH ADA TRANSAKSI/SESSION
     const hasTransaction = await prisma.transaction.findFirst({
       where: { ujianId: params.id },
     });

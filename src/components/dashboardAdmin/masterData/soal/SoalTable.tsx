@@ -19,7 +19,7 @@ export default function SoalTable() {
 
   const perPage = 5;
 
-  // 🔥 FETCH DATA DARI API
+  // FETCH DATA DARI API
   useEffect(() => {
     fetch("/api/soal")
       .then((res) => res.json())
@@ -242,7 +242,7 @@ export default function SoalTable() {
 
                     if (!res.ok) throw new Error();
 
-                    // 🔥 UPDATE UI TANPA RELOAD
+                    // UPDATE UI TANPA RELOAD
                     setData((prev) =>
                       prev.filter((item) => item.id !== deleteId),
                     );

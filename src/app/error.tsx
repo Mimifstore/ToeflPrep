@@ -12,7 +12,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // 🔥 Log error ke console (nanti bisa diganti ke error tracking service)
+    // Log error ke console (nanti bisa diganti ke error tracking service)
     console.error("GLOBAL ERROR:", error);
   }, [error]);
 

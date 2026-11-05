@@ -38,7 +38,7 @@ export default function BulkAudioUpload() {
 
     const fileArray = Array.from(files);
 
-    // 🔥 VALIDASI SEBELUM MASUK ANTRIAN
+    // VALIDASI SEBELUM MASUK ANTRIAN
     const validated: UploadItem[] = [];
     for (const file of fileArray) {
       if (!ALLOWED_AUDIO_TYPES.includes(file.type)) {
@@ -67,7 +67,7 @@ export default function BulkAudioUpload() {
 
     setUploading(true);
 
-    // 🔥 UPLOAD SATU-SATU (bukan Promise.all) — biar gak nge-flood Supabase
+    // UPLOAD SATU-SATU (bukan Promise.all) — biar gak nge-flood Supabase
     // storage dengan puluhan request bersamaan kalau filenya banyak
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -145,7 +145,7 @@ export default function BulkAudioUpload() {
     );
   };
 
-  // 🔥 DOWNLOAD SEBAGAI CSV — biar gampang dibuka di Excel & di-paste manual
+  // DOWNLOAD SEBAGAI CSV — biar gampang dibuka di Excel & di-paste manual
   const downloadCsv = () => {
     const rows = [
       ["NamaFileAsli", "AudioUrl"],

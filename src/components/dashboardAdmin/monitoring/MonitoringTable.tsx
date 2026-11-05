@@ -30,7 +30,7 @@ export default function MonitoringTable() {
     }
   }, []);
 
-  // 🔥 INITIAL FETCH + POLLING 10 DETIK
+  // INITIAL FETCH + POLLING 10 DETIK
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 10000);

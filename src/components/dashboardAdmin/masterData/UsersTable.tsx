@@ -48,7 +48,7 @@ export default function UsersTable({
         />
       </div>
 
-      {/* 🔥 MOBILE */}
+      {/* MOBILE */}
       <div className="md:hidden space-y-3">
         {loading ? (
           <CardListSkeleton />
@@ -141,7 +141,7 @@ export default function UsersTable({
         )}
       </div>
 
-      {/* 🔥 DESKTOP (TIDAK DIUBAH) */}
+      {/* DESKTOP (TIDAK DIUBAH) */}
       <div className="hidden md:block">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 border-b text-left text-gray-600">

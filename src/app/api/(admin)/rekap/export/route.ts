@@ -40,7 +40,7 @@ export async function GET(req: Request) {
       },
     });
 
-    // 🔥 BUILD ROWS
+    // BUILD ROWS
     const rows = sessions.map((s, i) => {
       const categoryMap = new Map<
         string,

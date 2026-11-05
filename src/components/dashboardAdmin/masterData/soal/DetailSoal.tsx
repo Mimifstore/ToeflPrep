@@ -26,7 +26,7 @@ export default function DetailSoal({ examId }: { examId: string }) {
   const [importResult, setImportResult] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 🔥 BULK DELETE STATE
+  // BULK DELETE STATE
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
@@ -183,20 +183,20 @@ export default function DetailSoal({ examId }: { examId: string }) {
     }
   };
 
-  // 🔥 TOGGLE SELECT MODE
+  // TOGGLE SELECT MODE
   const toggleSelectMode = () => {
     setSelectMode((prev) => !prev);
     setSelectedIds([]);
   };
 
-  // 🔥 TOGGLE SATU SOAL
+  // TOGGLE SATU SOAL
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
-  // 🔥 SELECT/DESELECT SEMUA DALAM 1 SECTION
+  // SELECT/DESELECT SEMUA DALAM 1 SECTION
   const toggleSelectSection = (questionIds: string[]) => {
     const allSelected = questionIds.every((id) => selectedIds.includes(id));
     if (allSelected) {
@@ -206,7 +206,7 @@ export default function DetailSoal({ examId }: { examId: string }) {
     }
   };
 
-  // 🔥 BULK DELETE
+  // BULK DELETE
   const handleBulkDelete = async () => {
     try {
       setBulkDeleting(true);
@@ -310,7 +310,7 @@ export default function DetailSoal({ examId }: { examId: string }) {
               </button>
             </Link>
 
-            {/* 🔥 TOGGLE SELECT MODE */}
+            {/* TOGGLE SELECT MODE */}
             <button
               onClick={toggleSelectMode}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${
@@ -330,7 +330,7 @@ export default function DetailSoal({ examId }: { examId: string }) {
           </div>
         </div>
 
-        {/* 🔥 BULK ACTION BAR */}
+        {/* BULK ACTION BAR */}
         {selectMode && selectedIds.length > 0 && (
           <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4">
             <span className="text-sm font-medium text-blue-700">
@@ -641,7 +641,7 @@ export default function DetailSoal({ examId }: { examId: string }) {
         </div>
       )}
 
-      {/* 🔥 BULK DELETE MODAL */}
+      {/* BULK DELETE MODAL */}
       {showBulkDeleteModal && (
         <div className="w-full fixed top-0 inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-96 shadow-lg">

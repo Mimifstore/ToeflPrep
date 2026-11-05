@@ -81,7 +81,7 @@ export default function TryoutExamTable({
           </p>
         </div>
 
-        {/* 🔥 BADGE MEMBER */}
+        {/* BADGE MEMBER */}
         {isMember && (
           <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm">
             <Crown className="w-4 h-4" />
@@ -112,7 +112,7 @@ export default function TryoutExamTable({
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
             {paginated.map((item) => {
-              // 🔥 MEMBER OTOMATIS PUNYA AKSES KE SEMUA UJIAN
+              // MEMBER OTOMATIS PUNYA AKSES KE SEMUA UJIAN
               const hasAccess = isMember || accessIds.includes(item.id);
 
               return (
@@ -120,7 +120,7 @@ export default function TryoutExamTable({
                   key={item.id}
                   className="bg-white border border-gray-200 rounded-md overflow-hidden shadow hover:shadow-lg transition relative"
                 >
-                  {/* 🔥 BADGE MEMBER DI CARD */}
+                  {/* BADGE MEMBER DI CARD */}
                   {isMember && (
                     <div className="absolute top-2 right-2 z-10 bg-yellow-400 text-white p-1.5 rounded-full shadow">
                       <Crown className="w-3 h-3" />

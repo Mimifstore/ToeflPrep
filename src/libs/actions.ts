@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { signIn } from "../../auth";
 import { AuthError } from "next-auth";
 import { rateLimit } from "./rate-limit";
-import { headers } from "next/headers"; // 🔥 BARU — buat ambil IP di Server Action
+import { headers } from "next/headers"; // BARU — buat ambil IP di Server Action
 
 export const signUpCredentials = async (
   prevState: unknown,
@@ -24,7 +24,7 @@ export const signUpCredentials = async (
 
   const { name, email, password } = validatedField.data;
 
-  // 🔥 RATE LIMIT — cegah spam registrasi
+  // RATE LIMIT — cegah spam registrasi
   // Server Action gak punya objek Request langsung, jadi ambil IP dari headers()
   const headersList = await headers();
   const forwardedFor = headersList.get("x-forwarded-for");
@@ -88,7 +88,7 @@ export const signInCredentials = async (
 
   const { email, password } = validatedField.data;
 
-  // 🔥 RATE LIMIT — max 5 percobaan login per email per 5 menit
+  // RATE LIMIT — max 5 percobaan login per email per 5 menit
   const { success, resetAt } = rateLimit({
     key: `login:${email}`,
     limit: 5,

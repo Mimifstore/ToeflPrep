@@ -11,7 +11,7 @@ type Props = {
 const DEBOUNCE_MS = 500;
 
 export function useAnswerSaver({ sessionId }: Props) {
-  // 🔥 SATU TIMER PER SOAL. Dulu satu timer untuk semua soal: menjawab soal berikutnya
+  // SATU TIMER PER SOAL. Dulu satu timer untuk semua soal: menjawab soal berikutnya
   // dalam 0,5 detik membatalkan simpanan soal sebelumnya (jawaban hilang diam-diam).
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   // jawaban terbaru per soal yang belum terkirim
@@ -91,7 +91,7 @@ export function useAnswerSaver({ sessionId }: Props) {
   }) => {
     pending.current.set(questionId, answer);
 
-    // 🔥 DEBOUNCE PER SOAL
+    // DEBOUNCE PER SOAL
     const existing = timers.current.get(questionId);
     if (existing) clearTimeout(existing);
 
@@ -108,7 +108,7 @@ export function useAnswerSaver({ sessionId }: Props) {
     );
   };
 
-  // 🔥 KIRIM SEMUA YANG MASIH MENUNGGU SEKARANG JUGA dan tunggu sampai selesai.
+  // KIRIM SEMUA YANG MASIH MENUNGGU SEKARANG JUGA dan tunggu sampai selesai.
   // Dipanggil sebelum pindah section atau submit, supaya jawaban terakhir tidak ketinggalan.
   const flush = useCallback(async () => {
     for (const [questionId, timer] of [...timers.current]) {

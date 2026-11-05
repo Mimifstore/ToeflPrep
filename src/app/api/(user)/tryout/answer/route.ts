@@ -5,7 +5,7 @@ import { saveAnswerService } from "@/service/exam/save-answer.service";
 
 export async function POST(req: Request) {
   try {
-    // 🔥 AUTH
+    // AUTH
     const sessionAuth = await auth();
 
     if (!sessionAuth?.user?.id) {
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 BODY
+    // BODY
     const json = await req.json();
 
     const validated = answerSchema.safeParse(json);
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.log("SAVE ANSWER ERROR:", error);
 
-    // 🔥 CUSTOM
+    // CUSTOM
     if (error.message === "QUESTION_NOT_FOUND") {
       return NextResponse.json(
         {

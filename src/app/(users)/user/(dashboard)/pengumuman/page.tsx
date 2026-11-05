@@ -14,7 +14,7 @@ export default function PengumumanPage() {
         <div className="hidden md:flex items-center text-sm text-gray-500">
           <span className="font-semibold text-xl mx-3">Pengumuman</span>
           <span className="mx-3 text-2xl">|</span>
-          <Link href="/user/dashboard" className="mx-2 text-blue-600">
+          <Link href="/user" className="mx-2 text-blue-600">
             <Home className="w-4 h-4" />
           </Link>
           <span className="mx-2 text-2xl">›</span>

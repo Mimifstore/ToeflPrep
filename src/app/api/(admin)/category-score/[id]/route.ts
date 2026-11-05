@@ -77,7 +77,7 @@ export async function PUT(
 
     const { mappings, ...rest } = validated.data;
 
-    // 🔥 TRANSACTION — hapus mapping lama, buat baru, update category — atomic
+    // TRANSACTION — hapus mapping lama, buat baru, update category — atomic
     const updated = await prisma.$transaction(async (tx) => {
       await tx.scoreMapping.deleteMany({ where: { categoryId: params.id } });
 

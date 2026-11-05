@@ -46,7 +46,7 @@ export default function TryoutTable() {
         <span className="flex items-center gap-2 text-gray-400">
           <ChevronRight className="w-4 h-4" />
           <Link
-            href="/user/dashboard"
+            href="/user"
             className="flex items-center gap-1 text-blue-600 hover:underline"
           >
             <Home className="w-4 h-4" />

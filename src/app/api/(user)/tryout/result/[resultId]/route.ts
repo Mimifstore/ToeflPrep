@@ -12,7 +12,7 @@ export async function GET(
   },
 ) {
   try {
-    // 🔥 AUTH
+    // AUTH
     const sessionAuth = await auth();
 
     if (!sessionAuth?.user?.id) {
@@ -26,12 +26,12 @@ export async function GET(
       );
     }
 
-    // 🔥 PARAMS
+    // PARAMS
     const params = await context.params;
 
     const validated = resultParamsSchema.parse(params);
 
-    // 🔥 SERVICE
+    // SERVICE
     const result = await getResultService({
       sessionId: validated.sessionId,
 
@@ -42,7 +42,7 @@ export async function GET(
   } catch (error: any) {
     console.log(error);
 
-    // 🔥 ZOD
+    // ZOD
     if (error.name === "ZodError") {
       return NextResponse.json(
         {
@@ -54,7 +54,7 @@ export async function GET(
       );
     }
 
-    // 🔥 CUSTOM
+    // CUSTOM
     if (error.message === "FORBIDDEN") {
       return NextResponse.json(
         {

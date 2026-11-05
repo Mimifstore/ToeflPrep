@@ -39,7 +39,7 @@ export async function PATCH(req: Request) {
 
     const { id, ...data } = validated.data;
 
-    // 🔥 CEK SISWA ADA
+    // CEK SISWA ADA
     const existing = await prisma.siswa.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ message: "Siswa tidak ditemukan" }, { status: 404 });

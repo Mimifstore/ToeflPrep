@@ -5,7 +5,7 @@ type Props = {
 };
 
 export async function calculateResult({ sessionId }: Props) {
-  // 🔥 GET SEMUA JAWABAN (exclude DIRECTION)
+  // GET SEMUA JAWABAN (exclude DIRECTION)
   const answers = await prisma.examAnswer.findMany({
     where: {
       sessionId,
@@ -27,7 +27,7 @@ export async function calculateResult({ sessionId }: Props) {
     },
   });
 
-  // 🔥 GROUP PER KATEGORI
+  // GROUP PER KATEGORI
   const categoryMap = new Map<
     string,
     {
@@ -63,7 +63,7 @@ export async function calculateResult({ sessionId }: Props) {
     }
   }
 
-  // 🔥 HITUNG FINAL SCORE PER KATEGORI VIA SCOREMAPPING DB
+  // HITUNG FINAL SCORE PER KATEGORI VIA SCOREMAPPING DB
   const categoryResults = [];
   let totalFinalScore = 0;
   let totalMaxFinalScore = 0;
@@ -74,7 +74,7 @@ export async function calculateResult({ sessionId }: Props) {
       (m) => cat.correct >= m.minScore && cat.correct <= m.maxScore,
     );
 
-    // 🔥 FIX: kalau jumlah jawaban benar melebihi rentang tertinggi yang
+    // FIX: kalau jumlah jawaban benar melebihi rentang tertinggi yang
     // di-mapping admin (misal admin cuma isi 0-50 tapi soal ada 60),
     // jangan diam-diam kasih finalScore 0 — pakai skor tertinggi yang tersedia.
     const highestMapping = cat.mappings[cat.mappings.length - 1];
@@ -100,17 +100,17 @@ export async function calculateResult({ sessionId }: Props) {
     });
   }
 
-  // 🔥 DETEKSI PROGRAM DARI KATEGORI
+  // DETEKSI PROGRAM DARI KATEGORI
   const program = categoryResults[0]?.program ?? "CUSTOM";
   const totalCategories = categoryResults.length;
 
-  // 🔥 STANDAR RESMI TOEFL ITP: selalu 3 section (Listening, Structure, Reading).
+  // STANDAR RESMI TOEFL ITP: selalu 3 section (Listening, Structure, Reading).
   // FIX: sebelumnya pakai `totalCategories` (dinamis, ikut jumlah kategori yang
   // kebetulan kejawab), padahal formula resmi pembaginya tetap 3 — kalau exam
   // dikonfigurasi kurang dari 3 section, skor jadi salah tanpa peringatan.
   const TOEFL_SECTION_COUNT = 3;
 
-  // 🔥 HITUNG TOTAL SCORE SESUAI STANDAR
+  // HITUNG TOTAL SCORE SESUAI STANDAR
   let score = 0;
   let maxScore = 0;
 
@@ -142,8 +142,8 @@ export async function calculateResult({ sessionId }: Props) {
     totalWrong,
     totalQuestion,
     score,
-    maxScore, // 🔥 BARU — dipakai buat hitung persentase ring skor di frontend
-    program, // 🔥 BARU — dipakai buat label di frontend
+    maxScore, // BARU — dipakai buat hitung persentase ring skor di frontend
+    program, // BARU — dipakai buat label di frontend
     categoryResults,
   };
 }

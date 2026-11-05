@@ -13,8 +13,8 @@ type Props = {
     review: { state: "open"; href: string } | { state: "locked"; minScore: number } | null;
     examTitle: string;
     score: number;
-    maxScore: number; // 🔥 BARU
-    program: string; // 🔥 BARU — "TOEFL" | "TOEIC" | "CUSTOM"
+    maxScore: number; // BARU
+    program: string; // BARU — "TOEFL" | "TOEIC" | "CUSTOM"
     totalQuestion: number;
     correctAnswer: number;
     wrongAnswer: number;
@@ -25,7 +25,7 @@ type Props = {
 export default function ResultScreen({ data }: Props) {
   const router = useRouter();
 
-  // 🔥 FIX: persentase ring sekarang dihitung dari score/maxScore sesuai
+  // FIX: persentase ring sekarang dihitung dari score/maxScore sesuai
   // skala aslinya (TOEFL bisa sampai ~677, TOEIC sampai 990), bukan
   // diasumsikan skala 0-100. Kalau maxScore belum ke-set (0), fallback ke 0
   // biar nggak NaN.
@@ -108,7 +108,7 @@ export default function ResultScreen({ data }: Props) {
                   <p className="text-4xl md:text-5xl font-bold text-gray-900">
                     {data.score}
                   </p>
-                  {/* 🔥 BARU — tampilkan skala max biar konteksnya jelas, mis. "990" buat TOEIC */}
+                  {/* BARU — tampilkan skala max biar konteksnya jelas, mis. "990" buat TOEIC */}
                   <p className="text-sm text-gray-400">
                     Score {data.maxScore > 0 ? `/ ${data.maxScore}` : ""}
                   </p>

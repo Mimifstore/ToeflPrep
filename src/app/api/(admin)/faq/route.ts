@@ -5,7 +5,7 @@ import { isBlankHtml, sanitizeRichText } from "@/libs/question-validation";
 import { fieldErrorResponse, validationErrorResponse } from "@/libs/api-errors";
 import { faqBodySchema } from "@/libs/content-validation";
 
-// 🔥 GET — PUBLIC, tidak perlu auth (FAQ memang untuk ditampilkan ke semua orang)
+// GET — PUBLIC, tidak perlu auth (FAQ memang untuk ditampilkan ke semua orang)
 export async function GET() {
   try {
     const data = await prisma.faq.findMany({
@@ -19,7 +19,7 @@ export async function GET() {
   }
 }
 
-// 🔥 POST — ADMIN ONLY
+// POST — ADMIN ONLY
 export async function POST(req: Request) {
   const { error } = await requireAdmin();
   if (error) return error;

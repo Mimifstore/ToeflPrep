@@ -10,7 +10,7 @@ export default function RekapTable() {
   const [detailData, setDetailData] = useState<any>(null);
 
   useEffect(() => {
-    // 🔥 Fetch list ujian untuk filter
+    // Fetch list ujian untuk filter
     fetch("/api/exam")
       .then((res) => res.json())
       .then(setUjianList);

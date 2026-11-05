@@ -87,7 +87,7 @@ export async function DELETE(req: Request) {
 
     const { id } = validated.data;
 
-    // 🔥 CEK APAKAH MASIH DIPAKAI SOAL
+    // CEK APAKAH MASIH DIPAKAI SOAL
     const usedInQuestion = await prisma.question.findFirst({
       where: { categoryPenilaianId: id },
     });

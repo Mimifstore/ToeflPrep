@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   if (error) return error;
 
   try {
-    // 🔥 PARSE FORM DATA
+    // PARSE FORM DATA
     const formData = await req.formData();
     const file = formData.get("file");
     const examId = formData.get("examId");
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 VALIDASI EXTENSION
+    // VALIDASI EXTENSION
     const fileName = file.name.toLowerCase();
     if (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls")) {
       return NextResponse.json(
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 VALIDASI UKURAN
+    // VALIDASI UKURAN
     if (file.size === 0) {
       return NextResponse.json({ message: "File kosong" }, { status: 400 });
     }
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 CEK EXAM EXIST
+    // CEK EXAM EXIST
     const exam = await prisma.exam.findUnique({
       where: { id: examId },
       select: { id: true },
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 CONVERT FILE KE BUFFER + CEK ISI SEBENARNYA (bukan cuma nama)
+    // CONVERT FILE KE BUFFER + CEK ISI SEBENARNYA (bukan cuma nama)
     const buffer = Buffer.from(await file.arrayBuffer());
     if (!looksLikeExcel(buffer)) {
       return NextResponse.json(
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 IMPORT
+    // IMPORT
     const result = await importSoalService(buffer, examId);
 
     return NextResponse.json(result);

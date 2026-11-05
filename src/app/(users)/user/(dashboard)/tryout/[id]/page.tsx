@@ -18,7 +18,7 @@ export default async function Page({
 
   const accessIds = accesses.map((item) => item.ujianId);
 
-  // 🔥 CEK STATUS MEMBER
+  // CEK STATUS MEMBER
   const siswa = await prisma.siswa.findUnique({
     where: { userId: session?.user?.id },
     select: { isMember: true },

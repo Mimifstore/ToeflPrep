@@ -57,17 +57,17 @@ export default function AudioPlayer({
 }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // 🔥 PREVENT MULTIPLE AUTOPLAY
+  // PREVENT MULTIPLE AUTOPLAY
   const hasAutoPlayed = useRef(false);
 
-  // 🔥 pemutaran yang sedang berjalan sudah dicatat ke server atau belum
+  // pemutaran yang sedang berjalan sudah dicatat ke server atau belum
   const countedRef = useRef(false);
 
-  // 🔥 soal yang sedang aktif (buat membuang hasil async yang sudah basi)
+  // soal yang sedang aktif (buat membuang hasil async yang sudah basi)
   const currentQuestionRef = useRef(questionId);
   currentQuestionRef.current = questionId;
 
-  // 🔥 onEnded dari parent selalu berganti tiap render, simpan di ref
+  // onEnded dari parent selalu berganti tiap render, simpan di ref
   const onEndedRef = useRef(onEnded);
   onEndedRef.current = onEnded;
 
@@ -91,20 +91,20 @@ export default function AudioPlayer({
     }
   }, [questionId, initialPlayCount]);
 
-  // 🔥 REMAINING PLAY
+  // REMAINING PLAY
   const remaining =
     playLimit != null ? Math.max(0, playLimit - playCount) : null;
 
-  // 🔥 DISABLED
+  // DISABLED
   const isDisabled = playLimit != null && playCount >= playLimit;
 
-  // 🔥 jatah sudah habis (misal dari tab lain): tandai habis dan buka kunci
+  // jatah sudah habis (misal dari tab lain): tandai habis dan buka kunci
   const markExhausted = useCallback(() => {
     if (playLimit != null) setPlayCount(playLimit);
     onEndedRef.current?.();
   }, [playLimit]);
 
-  // 🔥 CATAT PEMUTARAN: dipanggil setelah audio benar-benar bunyi
+  // CATAT PEMUTARAN: dipanggil setelah audio benar-benar bunyi
   const commitPlay = useCallback(async () => {
     if (countedRef.current) return;
     countedRef.current = true;
@@ -133,9 +133,9 @@ export default function AudioPlayer({
     }
   }, [sessionId, questionId, markExhausted]);
 
-  // 🔥 PLAY AUDIO
+  // PLAY AUDIO
   const handlePlay = useCallback(async () => {
-    // 🔥 BLOCK LIMIT + PREVENT DOUBLE REQUEST
+    // BLOCK LIMIT + PREVENT DOUBLE REQUEST
     if (isDisabled || playing || loading) return;
 
     const audioEl = audioRef.current;
@@ -189,7 +189,7 @@ export default function AudioPlayer({
     }
   }, [isDisabled, playing, loading, sessionId, questionId, markExhausted]);
 
-  // 🔥 AUTO PLAY ONLY ONCE PER QUESTION
+  // AUTO PLAY ONLY ONCE PER QUESTION
   useEffect(() => {
     if (autoPlay && !hasAutoPlayed.current && !isDisabled) {
       hasAutoPlayed.current = true;

@@ -60,7 +60,7 @@ export default function Table() {
         </Link>
       </div>
 
-      {/* 🔥 MOBILE */}
+      {/* MOBILE */}
       <div className="md:hidden space-y-3">
         {loading ? (
           <CardListSkeleton />
@@ -135,7 +135,7 @@ export default function Table() {
         )}
       </div>
 
-      {/* 🔥 DESKTOP (TIDAK DIUBAH) */}
+      {/* DESKTOP (TIDAK DIUBAH) */}
       <div className="hidden md:block">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 border-b text-gray-600 text-left">

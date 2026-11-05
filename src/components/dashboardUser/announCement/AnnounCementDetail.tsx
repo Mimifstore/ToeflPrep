@@ -25,7 +25,7 @@ export function AnnountCementDetail({ id }: { id: string }) {
   return (
     <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto space-y-4">
-        {/* 🔥 HEADER */}
+        {/* HEADER */}
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-base md:text-lg font-semibold text-gray-800 leading-snug">
@@ -46,7 +46,7 @@ export function AnnountCementDetail({ id }: { id: string }) {
           </button>
         </div>
 
-        {/* 🔥 CONTENT */}
+        {/* CONTENT */}
         <div className="bg-white border rounded-2xl shadow-sm p-4 md:p-6">
           <div
             className="

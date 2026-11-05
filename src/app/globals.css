@@ -45,7 +45,7 @@ body {
   100%{transform: rotate(1turn)}
 }
 
-/* 🔥 BASE STYLE (udah lu punya, gw rapihin dikit) */
+/* BASE STYLE (udah lu punya, gw rapihin dikit) */
 .ql-toolbar {
   border: none !important;
   border-bottom: 1px solid #e5e7eb !important;
@@ -55,7 +55,7 @@ body {
   border: none !important;
 }
 
-/* 🔥 DEFAULT EDITOR */
+/* DEFAULT EDITOR */
 .ql-editor {
   font-size: 14px;
 }
@@ -106,7 +106,7 @@ body {
   border-radius: 8px;
 }
 
-/* 🔥 TAMBAHAN PENTING */
+/* TAMBAHAN PENTING */
 .ql-editor pre,
 .ql-editor code {
   white-space: pre-wrap !important;

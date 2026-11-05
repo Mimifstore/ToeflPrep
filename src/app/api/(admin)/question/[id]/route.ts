@@ -114,7 +114,7 @@ export async function PATCH(
       );
     }
 
-    // 🔥 VALIDASI + SANITASI (URL audio lama yang tidak diubah tetap boleh)
+    // VALIDASI + SANITASI (URL audio lama yang tidak diubah tetap boleh)
     const prepared = await prepareQuestion(validated.data, {
       currentAudioUrl: existing.audioUrl,
     });
@@ -125,7 +125,7 @@ export async function PATCH(
     }
     const p = prepared.value;
 
-    // 🔥 PINDAH SECTION: taruh di urutan terakhir section tujuan, rapatkan urutan section asal
+    // PINDAH SECTION: taruh di urutan terakhir section tujuan, rapatkan urutan section asal
     const sectionChanged = existing.sectionId !== p.sectionId;
     let order = existing.order;
     if (sectionChanged) {

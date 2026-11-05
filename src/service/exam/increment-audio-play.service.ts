@@ -28,7 +28,7 @@ export async function incrementAudioPlayService({
     throw new Error("QUESTION_NOT_FOUND");
   }
 
-  // 🔥 SOAL HARUS BAGIAN DARI SESI INI dan dari section yang sedang berjalan
+  // SOAL HARUS BAGIAN DARI SESI INI dan dari section yang sedang berjalan
   const inSession = await prisma.examSessionQuestion.findFirst({
     where: { sessionId, questionId },
     select: { id: true },
@@ -43,7 +43,7 @@ export async function incrementAudioPlayService({
     throw new Error("SECTION_MISMATCH");
   }
 
-  // 🔥 MODE CEK: pastikan masih ada jatah, tanpa menambah hitungan
+  // MODE CEK: pastikan masih ada jatah, tanpa menambah hitungan
   if (!commit) {
     const existing = await prisma.examAudioTrack.findUnique({
       where: { sessionId_questionId: { sessionId, questionId } },
@@ -64,7 +64,7 @@ export async function incrementAudioPlayService({
     };
   }
 
-  // 🔥 MODE CATAT — TRANSACTION: atomic check + increment, cegah race condition
+  // MODE CATAT — TRANSACTION: atomic check + increment, cegah race condition
   const track = await prisma.$transaction(async (tx) => {
     const existing = await tx.examAudioTrack.findUnique({
       where: { sessionId_questionId: { sessionId, questionId } },

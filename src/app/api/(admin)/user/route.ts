@@ -35,7 +35,7 @@ export async function PATCH(req: Request) {
       );
     }
 
-    // 🔥 CEGAH ADMIN NONAKTIFKAN DIRI SENDIRI
+    // CEGAH ADMIN NONAKTIFKAN DIRI SENDIRI
     if (validated.data.userId === session!.user.id) {
       return NextResponse.json(
         { message: "Tidak dapat menonaktifkan akun sendiri" },

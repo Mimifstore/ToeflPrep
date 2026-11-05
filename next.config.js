@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 
-// 🔥 CSP — whitelist domain yang beneran dipake project ini:
+// CSP — whitelist domain yang beneran dipake project ini:
 // - 'self' buat semua asset dari domain sendiri
 // - Midtrans Snap.js (sandbox & production, sesuai src/app/layout.tsx)
 // - Supabase (gambar via next/image + koneksi API)
@@ -53,7 +53,7 @@ const nextConfig = {
             value: "camera=(), microphone=(), geolocation=()",
           },
           {
-            // 🔥 GANTI ke "Content-Security-Policy" (tanpa "-Report-Only")
+            // GANTI ke "Content-Security-Policy" (tanpa "-Report-Only")
             // SETELAH lu tes beberapa hari dan yakin gak ada yang keblokir.
             key: "Content-Security-Policy-Report-Only",
             value: cspHeader,

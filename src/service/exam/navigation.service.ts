@@ -15,13 +15,13 @@ export async function navigationService({
   questionId,
   userId,
 }: Props) {
-  // 🔥 VALIDATE SESSION
+  // VALIDATE SESSION
   await validateSession({
     sessionId,
     userId,
   });
 
-  // 🔥 VALIDATE QUESTION
+  // VALIDATE QUESTION
   const sessionQuestion = await prisma.examSessionQuestion.findFirst({
     where: {
       sessionId,
@@ -34,7 +34,7 @@ export async function navigationService({
     throw new Error("QUESTION_NOT_FOUND");
   }
 
-  // 🔥 UPDATE CURRENT QUESTION
+  // UPDATE CURRENT QUESTION
   await prisma.examSession.update({
     where: {
       id: sessionId,

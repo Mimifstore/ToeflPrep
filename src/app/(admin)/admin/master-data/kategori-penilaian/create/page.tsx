@@ -8,7 +8,7 @@ import { FieldError, fieldA11y } from "@/components/Ui/FormField";
 import { useFieldErrors } from "@/hooks/useFieldErrors";
 import { FIELD_ERROR_ATTR, readApiFailure } from "@/libs/form-errors";
 
-// 🔥 TABEL KONVERSI TOEFL ITP STANDAR
+// TABEL KONVERSI TOEFL ITP STANDAR
 const TOEFL_TABLES: Record<string, Record<number, number>> = {
   listening: {
     0: 24,
@@ -161,7 +161,7 @@ const TOEFL_TABLES: Record<string, Record<number, number>> = {
   },
 };
 
-// 🔥 TABEL KONVERSI TOEIC STANDAR
+// TABEL KONVERSI TOEIC STANDAR
 const TOEIC_TABLES: Record<string, Record<number, number>> = {
   listening: {
     0: 5,
@@ -314,7 +314,7 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
     fetchSections();
   }, []);
 
-  // 🔥 MODE EDIT: ambil data kategori yang mau diedit
+  // MODE EDIT: ambil data kategori yang mau diedit
   useEffect(() => {
     if (!categoryId) return;
 
@@ -380,7 +380,7 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
     }
   };
 
-  // 🔥 GENERATE MAPPING BERDASARKAN PROGRAM DAN NAMA
+  // GENERATE MAPPING BERDASARKAN PROGRAM DAN NAMA
   const generateMapping = () => {
     if (
       mappings.length > 0 &&
@@ -493,7 +493,7 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
     }
   };
 
-  // 🔥 LOADING DATA (mode edit)
+  // LOADING DATA (mode edit)
   if (loadingData) {
     return (
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4 animate-pulse">
@@ -753,7 +753,7 @@ function KategoriPenilaianForm({ categoryId }: { categoryId?: string }) {
   );
 }
 
-// 🔥 Halaman ini dipakai untuk TAMBAH dan EDIT:
+// Halaman ini dipakai untuk TAMBAH dan EDIT:
 //   /kategori-penilaian/create           -> tambah
 //   /kategori-penilaian/create?id=<id>   -> edit
 function FormLoader() {

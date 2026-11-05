@@ -7,7 +7,7 @@ type Props = {
 };
 
 export async function getResultService({ sessionId, userId }: Props) {
-  // 🔥 GET SESSION
+  // GET SESSION
   const session = await prisma.examSession.findUnique({
     where: {
       id: sessionId,

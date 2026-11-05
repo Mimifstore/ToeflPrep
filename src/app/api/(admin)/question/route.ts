@@ -23,13 +23,13 @@ export async function POST(req: Request) {
 
     const { examId, ...input } = validated.data;
 
-    // 🔥 CEK EXAM EXIST
+    // CEK EXAM EXIST
     const exam = await prisma.exam.findUnique({ where: { id: examId } });
     if (!exam) {
       return NextResponse.json({ error: "Exam tidak ditemukan" }, { status: 404 });
     }
 
-    // 🔥 VALIDASI + SANITASI (section, kategori, isi soal, pilihan, audio)
+    // VALIDASI + SANITASI (section, kategori, isi soal, pilihan, audio)
     const prepared = await prepareQuestion(input);
     if (!prepared.ok) {
       return prepared.field

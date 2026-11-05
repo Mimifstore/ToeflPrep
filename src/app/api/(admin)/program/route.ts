@@ -19,7 +19,7 @@ const deleteProgramSchema = z.object({
 });
 
 export async function GET() {
-  // 🔥 AUTH — cukup login (dipakai admin & user, bukan data sensitif)
+  // AUTH — cukup login (dipakai admin & user, bukan data sensitif)
   const { error } = await requireAuth();
   if (error) return error;
 
@@ -100,7 +100,7 @@ export async function DELETE(req: Request) {
 
     const { id } = validated.data;
 
-    // 🔥 CEK APAKAH PROGRAM MASIH DIPAKAI
+    // CEK APAKAH PROGRAM MASIH DIPAKAI
     const usedInExam = await prisma.exam.findFirst({ where: { categoryId: id } });
     const usedInUjian = await prisma.ujian.findFirst({ where: { programId: id } });
 

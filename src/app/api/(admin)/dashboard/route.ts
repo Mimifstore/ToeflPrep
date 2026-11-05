@@ -14,7 +14,7 @@ export async function GET() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-    // 🔥 FIX — role harus "USER" huruf besar, bukan "user"
+    // FIX — role harus "USER" huruf besar, bukan "user"
     const totalUser = await prisma.user.count({ where: { role: "USER" } });
     const activeUser = await prisma.user.count({
       where: { isActive: true, role: "USER" },

@@ -35,7 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const { email, password } = validateFields.data;
 
-        // 🔥 RATE LIMIT — cegah brute force login
+        // RATE LIMIT — cegah brute force login
         // Dua lapis: per-IP (cegah spray ke banyak akun) & per-email
         // (cegah target satu akun walau IP-nya gonta-ganti)
         const ip = getClientIp(request);
@@ -93,12 +93,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return Response.redirect(new URL("/login", nextUrl));
       }
 
-      // 🔥 user biasa masuk admin → tendang
+      // user biasa masuk admin → tendang
       if (isLoggedIn && isAdminRoute && auth?.user?.role !== "ADMIN") {
         return Response.redirect(new URL("/user", nextUrl));
       }
 
-      // 🔥 login → redirect sesuai role
+      // login → redirect sesuai role
       if (isLoggedIn && isLoginPage) {
         if (auth?.user?.role === "ADMIN") {
           return Response.redirect(new URL("/admin", nextUrl));

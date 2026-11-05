@@ -11,7 +11,7 @@ export async function DELETE(
   if (error) return error;
 
   try {
-    // 🔥 CEGAH ADMIN HAPUS DIRI SENDIRI
+    // CEGAH ADMIN HAPUS DIRI SENDIRI
     if (params.id === session!.user.id) {
       return NextResponse.json(
         { message: "Tidak dapat menghapus akun sendiri" },
@@ -19,7 +19,7 @@ export async function DELETE(
       );
     }
 
-    // 🔥 CEK USER ADA
+    // CEK USER ADA
     const targetUser = await prisma.user.findUnique({
       where: { id: params.id },
     });
