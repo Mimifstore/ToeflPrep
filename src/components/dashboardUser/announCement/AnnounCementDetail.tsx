@@ -3,21 +3,39 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { AnnouncementDetailSkeleton } from "@/components/dashboardUser/skeletons";
 
 export function AnnountCementDetail({ id }: { id: string }) {
   const router = useRouter();
   const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Gagal atau tidak ditemukan sama-sama berakhir dengan data null.
     fetch(`/api/announcement/${id}`)
-      .then((res) => res.json())
-      .then(setData);
+      .then((res) => (res.ok ? res.json() : null))
+      .then(setData)
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
   }, [id]);
 
   if (!data) {
     return (
-      <div className="text-center py-16 text-gray-400 text-sm">
-        Loading...
+      <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
+        {loading ? (
+          <AnnouncementDetailSkeleton />
+        ) : (
+          <div className="mx-auto max-w-4xl py-16 text-center text-sm text-gray-400">
+            <p>Pengumuman tidak ditemukan.</p>
+            <button
+              onClick={() => router.back()}
+              className="mt-3 inline-flex items-center gap-1 text-gray-500 transition hover:text-blue-600"
+            >
+              <ArrowLeft size={16} />
+              Kembali
+            </button>
+          </div>
+        )}
       </div>
     );
   }

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { TableRowsSkeleton } from "@/components/Ui/Skeleton";
 
 export default function ExerciseList() {
   const [data, setData] = useState<any[]>([]);
@@ -66,15 +67,7 @@ export default function ExerciseList() {
           </thead>
           <tbody>
             {loading ? (
-              [...Array(5)].map((_, i) => (
-                <tr key={i} className="border-b">
-                  {[...Array(7)].map((_, j) => (
-                    <td key={j} className="px-3 py-4">
-                      <div className="h-4 bg-gray-100 rounded animate-pulse" />
-                    </td>
-                  ))}
-                </tr>
-              ))
+              <TableRowsSkeleton rows={5} cols={7} />
             ) : data.length === 0 ? (
               <tr>
                 <td

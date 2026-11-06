@@ -2,6 +2,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import Busy from "@/components/Ui/Busy";
 
 type Props = {
   ujianId: string;
@@ -44,7 +45,9 @@ export default function FreeAccessButton({
       disabled={loading}
       className={`w-full disabled:opacity-50 ${className || ""}`}
     >
-      {loading ? "Memproses..." : children || "Mulai Gratis"}
+      <Busy loading={loading} text="Memproses...">
+        {children || "Mulai Gratis"}
+      </Busy>
     </button>
   );
 }

@@ -3,23 +3,33 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Megaphone } from "lucide-react";
+import { TableRowsSkeleton } from "@/components/Ui/Skeleton";
 
 export function AnnounCementTable() {
   const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   const limit = 5;
 
   const fetchData = async (pageNumber = 1) => {
-    const res = await fetch(
-      `/api/announcement?page=${pageNumber}&limit=${limit}`,
-    );
-    const result = await res.json();
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/announcement?page=${pageNumber}&limit=${limit}`,
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const result = await res.json();
 
-    setData(result.data);
-    setTotalPages(result.totalPages);
-    setPage(result.page);
+      setData(result.data);
+      setTotalPages(result.totalPages);
+      setPage(result.page);
+    } catch (error) {
+      console.error("Gagal fetch pengumuman:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -67,7 +77,9 @@ export function AnnounCementTable() {
           </thead>
 
           <tbody>
-            {data.length === 0 ? (
+            {loading ? (
+              <TableRowsSkeleton rows={limit} cols={4} />
+            ) : data.length === 0 ? (
               <tr>
                 <td
                   colSpan={4}

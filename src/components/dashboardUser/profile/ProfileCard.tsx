@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { User, Edit3, Save, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { ProfileSkeleton } from "@/components/dashboardUser/skeletons";
+import Busy from "@/components/Ui/Busy";
 
 export default function ProfileCard() {
   const [profile, setProfile] = useState<any>(null);
@@ -12,7 +14,10 @@ export default function ProfileCard() {
 
   useEffect(() => {
     fetch("/api/user/profile")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         setProfile(data);
         setForm({
@@ -26,6 +31,7 @@ export default function ProfileCard() {
           village: data.village || "",
         });
       })
+      .catch(() => toast.error("Gagal memuat profil"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -65,12 +71,13 @@ export default function ProfileCard() {
     setEditing(false);
   };
 
-  if (loading) {
+  if (loading) return <ProfileSkeleton />;
+
+  // Gagal dimuat (bukan masih loading): tampilkan pesan, jangan crash karena profile kosong.
+  if (!profile) {
     return (
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="h-10 bg-gray-100 rounded-xl animate-pulse" />
-        ))}
+      <div className="rounded-2xl border border-gray-100 bg-white p-10 text-center text-sm text-gray-400">
+        Profil tidak dapat dimuat.
       </div>
     );
   }
@@ -153,8 +160,10 @@ export default function ProfileCard() {
                 disabled={saving}
                 className="flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-50"
               >
-                <Save className="w-4 h-4" />
-                {saving ? "Menyimpan..." : "Simpan"}
+                <Busy loading={saving} text="Menyimpan...">
+                  <Save className="w-4 h-4" />
+                  Simpan
+                </Busy>
               </button>
             </div>
           )}

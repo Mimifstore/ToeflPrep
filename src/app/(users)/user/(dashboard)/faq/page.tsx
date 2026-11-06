@@ -11,6 +11,7 @@ type FAQ = {
 
 export default function FAQPage() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchFaqs = async () => {
     try {
@@ -20,6 +21,8 @@ export default function FAQPage() {
       setFaqs(Array.isArray(result) ? result : []);
     } catch (error) {
       console.error("Gagal fetch FAQ:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -30,7 +33,7 @@ export default function FAQPage() {
   // FaqTable membaca ?faq=<id> (useSearchParams), yang wajib dibungkus Suspense.
   return (
     <Suspense fallback={null}>
-      <FaqTable faqs={faqs} />
+      <FaqTable faqs={faqs} loading={loading} />
     </Suspense>
   );
 }

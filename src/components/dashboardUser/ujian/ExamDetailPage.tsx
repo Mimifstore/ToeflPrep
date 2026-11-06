@@ -5,6 +5,7 @@ import { Home } from "lucide-react";
 import ExamInformation from "./ExamInformation";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Busy from "@/components/Ui/Busy";
 
 type Props = {
   exam: any;
@@ -144,9 +145,11 @@ export default function ExamDetailPage({ exam, user }: Props) {
               <button
                 onClick={handleStartExam}
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 transition text-white px-8 py-3 rounded-md text-sm font-medium shadow"
+                className="bg-blue-600 hover:bg-blue-700 transition text-white px-8 py-3 rounded-md text-sm font-medium shadow disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Memulai..." : "Mulai Kerjakan"}
+                <Busy loading={loading} text="Memulai...">
+                  Mulai Kerjakan
+                </Busy>
               </button>
             </div>
           </div>

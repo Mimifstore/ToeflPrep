@@ -5,6 +5,7 @@ import { Home, ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FaqListSkeleton } from "@/components/dashboardUser/skeletons";
 
 type FAQ = {
   id: string;
@@ -12,7 +13,13 @@ type FAQ = {
   answer: string;
 };
 
-export default function FaqTable({ faqs }: { faqs: FAQ[] }) {
+export default function FaqTable({
+  faqs,
+  loading = false,
+}: {
+  faqs: FAQ[];
+  loading?: boolean;
+}) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const targetId = useSearchParams().get("faq");
 
@@ -47,6 +54,8 @@ export default function FaqTable({ faqs }: { faqs: FAQ[] }) {
       {/* Card */}
       <Card className="p-4 border border-gray-100">
         <div className="space-y-2">
+          {loading && <FaqListSkeleton />}
+
           {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
 
@@ -99,7 +108,7 @@ export default function FaqTable({ faqs }: { faqs: FAQ[] }) {
             );
           })}
 
-          {faqs.length === 0 && (
+          {!loading && faqs.length === 0 && (
             <div className="p-6 text-center text-gray-400 text-sm border border-gray-100 rounded-xl">
               Data FAQ belum tersedia
             </div>

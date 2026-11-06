@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useRouter } from "next/navigation";
+import Busy from "@/components/Ui/Busy";
 
 type Props = {
   ujianId: string;
@@ -132,7 +133,9 @@ export default function BuyButton({ ujianId, className, children }: Props) {
       disabled={loading}
       className={`w-full disabled:opacity-50 ${className || ""}`}
     >
-      {loading ? "Memproses..." : children || "Beli Paket"}
+      <Busy loading={loading} text="Memproses...">
+        {children || "Beli Paket"}
+      </Busy>
     </button>
   );
 }

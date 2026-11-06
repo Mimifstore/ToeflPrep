@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ListRowsSkeleton } from "@/components/dashboardUser/skeletons";
 
 export default function ExerciseTable() {
   const [data, setData] = useState<any[]>([]);
@@ -37,11 +38,7 @@ export default function ExerciseTable() {
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-14 bg-gray-100 rounded-xl animate-pulse" />
-          ))}
-        </div>
+        <ListRowsSkeleton />
       ) : data.length === 0 ? (
         <div className="py-8 text-center text-gray-400 text-sm">
           Belum ada riwayat latihan

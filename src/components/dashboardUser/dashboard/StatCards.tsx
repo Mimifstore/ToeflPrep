@@ -1,6 +1,7 @@
 "use client";
 import { PenBox, Receipt } from "lucide-react";
 import { useEffect, useState } from "react";
+import { StatValueSkeleton } from "@/components/dashboardUser/skeletons";
 
 export default function StatCards() {
   const [stats, setStats] = useState({ totalSessions: 0, totalTransactions: 0 });
@@ -42,7 +43,7 @@ export default function StatCards() {
             <div>
               <p className="text-sm text-gray-500">{s.title}</p>
               {loading ? (
-                <span className="inline-block w-12 h-7 bg-gray-100 rounded animate-pulse mt-1" />
+                <StatValueSkeleton />
               ) : (
                 <p className="text-xl md:text-3xl font-semibold text-gray-900 mt-0.5">
                   {s.value}
