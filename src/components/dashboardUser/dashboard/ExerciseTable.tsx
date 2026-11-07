@@ -1,89 +1,91 @@
 "use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ListRowsSkeleton } from "@/components/dashboardUser/skeletons";
+
+import { Play, Timer } from "lucide-react";
+import ExerciseAction, { hasExerciseAction } from "@/components/dashboardUser/shared/ExerciseAction";
+import {
+  ExerciseTitleCell,
+  EMPTY_CELL,
+  ScoreText,
+} from "@/components/dashboardUser/shared/exercise-cells";
+import { ActionLink } from "@/components/dashboardUser/ui/ActionButton";
+import CategoryBadge from "@/components/dashboardUser/ui/CategoryBadge";
+import DashboardCard, { CardLink } from "@/components/dashboardUser/ui/DashboardCard";
+import DataTable, { type DataColumn } from "@/components/dashboardUser/ui/DataTable";
+import EmptyState from "@/components/dashboardUser/ui/EmptyState";
+import RowCard from "@/components/dashboardUser/ui/RowCard";
+import StatusBadge from "@/components/dashboardUser/ui/StatusBadge";
+import { resolveStatus, SESSION_STATUS } from "@/constants/user-status";
+import { useApiData } from "@/hooks/useApiData";
+import { formatDate } from "@/libs/user-format";
+import type { ExerciseItem, PagedResponse } from "@/types/user-dashboard";
+
+const LIMIT = 5;
+
+const COLUMNS: DataColumn<ExerciseItem>[] = [
+  { header: "Ujian", cell: (d) => <ExerciseTitleCell exercise={d} /> },
+  { header: "Skor", cell: (d) => <ScoreText score={d.score} /> },
+  {
+    header: "Status",
+    cell: (d) => <StatusBadge status={resolveStatus(SESSION_STATUS, d.status)} />,
+  },
+  {
+    header: "Tanggal",
+    className: "whitespace-nowrap text-gray-500",
+    cell: (d) => formatDate(d.startedAt),
+  },
+  {
+    header: "Aksi",
+    cell: (d) => (hasExerciseAction(d) ? <ExerciseAction exercise={d} /> : EMPTY_CELL),
+  },
+];
 
 export default function ExerciseTable() {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/user/exercises")
-      .then((res) => res.json())
-      .then((res) => {
-        setData(res.data ?? []);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  const statusBadge = (status: string) => {
-    if (status === "SUBMITTED") return "bg-emerald-100 text-emerald-700";
-    if (status === "EXPIRED") return "bg-red-50 text-red-600";
-    return "bg-amber-50 text-amber-700";
-  };
-
-  const statusLabel = (status: string) => {
-    if (status === "SUBMITTED") return "Selesai";
-    if (status === "EXPIRED") return "Expired";
-    return "Berlangsung";
-  };
+  const { data, status, reload } = useApiData<PagedResponse<ExerciseItem>>(
+    `/api/user/exercises?limit=${LIMIT}`,
+  );
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-md">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-800">Latihan Terakhir</h3>
-        <Link href="/user/riwayat" className="text-xs text-blue-600 hover:underline">
-          Lihat semua
-        </Link>
-      </div>
-
-      {loading ? (
-        <ListRowsSkeleton />
-      ) : data.length === 0 ? (
-        <div className="py-8 text-center text-gray-400 text-sm">
-          Belum ada riwayat latihan
-        </div>
-      ) : (
-        <div className="overflow-x-auto -mx-2">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
-                <th className="pb-2 px-2 font-medium">Ujian</th>
-                <th className="pb-2 px-2 font-medium">Score</th>
-                <th className="pb-2 px-2 font-medium">Status</th>
-                <th className="pb-2 px-2 font-medium">Tanggal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((d) => (
-                <tr key={d.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                  <td className="py-3 px-2">
-                    <p className="font-medium text-gray-800 text-xs">{d.ujianTitle}</p>
-                    <p className="text-xs text-gray-400">{d.category}</p>
-                  </td>
-                  <td className="py-3 px-2">
-                    <span className="font-semibold text-blue-500">
-                      {d.score ?? "-"}
-                    </span>
-                  </td>
-                  <td className="py-3 px-2">
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusBadge(d.status)}`}>
-                      {statusLabel(d.status)}
-                    </span>
-                  </td>
-                  <td className="py-3 px-2 text-xs text-gray-400">
-                    {new Date(d.startedAt).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+    <DashboardCard
+      title="Latihan Terakhir"
+      subtitle="Aktivitas try out terbaru kamu"
+      action={<CardLink href="/user/riwayat">Lihat semua</CardLink>}
+    >
+      <DataTable
+        columns={COLUMNS}
+        rows={data?.data ?? []}
+        getRowKey={(d) => d.id}
+        status={status}
+        onRetry={reload}
+        skeletonRows={LIMIT}
+        empty={
+          <EmptyState
+            icon={Timer}
+            title="Belum ada riwayat latihan"
+            description="Mulai try out pertamamu, hasilnya akan muncul di sini."
+            action={
+              <ActionLink href="/user/tryout" icon={Play} size="md">
+                Mulai Try Out
+              </ActionLink>
+            }
+          />
+        }
+        renderCard={(d) => (
+          <RowCard
+            title={d.ujianTitle}
+            meta={
+              <>
+                <CategoryBadge name={d.category} />
+                <span>{formatDate(d.startedAt)}</span>
+              </>
+            }
+            badge={<StatusBadge status={resolveStatus(SESSION_STATUS, d.status)} />}
+            details={[{ label: "Skor", value: <ScoreText score={d.score} /> }]}
+            action={
+              hasExerciseAction(d) ? <ExerciseAction exercise={d} size="md" fullWidth /> : undefined
+            }
+          />
+        )}
+      />
+    </DashboardCard>
   );
 }

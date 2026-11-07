@@ -6,28 +6,28 @@ import { Skeleton } from "@/components/Ui/Skeleton";
  * loncatan layout saat data tiba.
  */
 
-/** Angka di kartu statistik. Tingginya sama dengan angka aslinya, jadi kartu tidak bergeser. */
+/** Angka di kartu statistik berwarna. Tingginya sama dengan angka aslinya, jadi kartu tidak bergeser. */
 export function StatValueSkeleton() {
   return (
-    <div className="mt-0.5 flex h-7 items-center md:h-9">
-      <Skeleton className="h-5 w-12 md:h-6" />
+    <div aria-hidden="true" className="mt-0.5 flex h-8 items-center">
+      <div className="h-6 w-14 animate-pulse rounded bg-white/30 motion-reduce:animate-none" />
     </div>
   );
 }
 
-/** Baris-baris kerangka untuk kartu ringkasan di dashboard. */
-export function ListRowsSkeleton({
-  rows = 3,
-  rowClassName = "h-14",
-}: {
-  rows?: number;
-  /** Tinggi tiap baris, mis. "h-10". */
-  rowClassName?: string;
-}) {
+/** Daftar pengumuman di dashboard: titik, judul, cuplikan, tanggal. */
+export function AnnouncementListSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div role="status" aria-label="Memuat data" className="space-y-3">
-      {Array.from({ length: rows }, (_, i) => (
-        <Skeleton key={i} className={`w-full rounded-xl ${rowClassName}`} />
+    <div role="status" aria-label="Memuat pengumuman" className="-mx-2 divide-y divide-gray-100">
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} aria-hidden="true" className="flex items-start gap-3 px-2 py-3">
+          <Skeleton className="mt-1.5 h-2 w-2 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </div>
       ))}
     </div>
   );

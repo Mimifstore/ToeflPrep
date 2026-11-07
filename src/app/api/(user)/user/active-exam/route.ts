@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { activeSessionWhere } from "@/libs/exam-session-filters";
 import { prisma } from "@/libs/prisma";
 import { auth } from "../../../../../../auth";
 
@@ -17,15 +18,7 @@ export async function GET() {
     }
 
     const active = await prisma.examSession.findFirst({
-      where: {
-        userId: session.user.id,
-        status: "ONGOING",
-        OR: [
-          { expiredAt: null },
-          { expiredAt: { gt: new Date() } },
-          { ujian: { timeType: "PER_SECTION" } },
-        ],
-      },
+      where: activeSessionWhere(session.user.id),
       orderBy: { startedAt: "desc" },
       select: { id: true, ujian: { select: { title: true } } },
     });
