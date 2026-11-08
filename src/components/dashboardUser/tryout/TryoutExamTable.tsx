@@ -1,202 +1,167 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Home, ChevronRight, ChevronLeft, Crown } from "lucide-react";
-import BuyButton from "./BuyButton";
-import FreeAccessButton from "./FreeAccessButton";
+import { useCallback, useMemo, useState } from "react";
+import { Crown, FileSearch, FileText } from "lucide-react";
 import { ExamCardsSkeleton } from "@/components/dashboardUser/skeletons";
+import { ActionButton, ActionLink } from "@/components/dashboardUser/ui/ActionButton";
+import EmptyState from "@/components/dashboardUser/ui/EmptyState";
+import ErrorState from "@/components/dashboardUser/ui/ErrorState";
+import PageHeader from "@/components/dashboardUser/ui/PageHeader";
+import Pagination from "@/components/dashboardUser/ui/Pagination";
+import SearchInput from "@/components/dashboardUser/ui/SearchInput";
+import SegmentedControl from "@/components/dashboardUser/ui/SegmentedControl";
+import { useApiData } from "@/hooks/useApiData";
+import { countExams, filterExams, type ExamFilter } from "@/libs/exam-filter";
+import type { UjianItem } from "@/types/user-tryout";
+import ExamCard from "./ExamCard";
 
-type UjianType = {
-  id: string;
-  title: string;
-  price: number;
-  description?: string;
-  program?: {
-    id: string;
-    name: string;
-    image: string;
-  };
-};
+const PER_PAGE = 6;
 
-export default function TryoutExamTable({
-  programId,
-  accessIds,
-  isMember = false,
-}: {
-  programId: string;
+const DEFAULT_DESCRIPTION = "Pilih paket ujian yang ingin kamu kerjakan. Pastikan kamu sudah siap sebelum memulai.";
+
+type TryoutExamTableProps = {
+  program: { id: string; name: string; description: string | null };
+  /** ID ujian yang sudah bisa dikerjakan siswa (dibeli, gratis yang sudah diambil, dst). */
   accessIds: string[];
   isMember?: boolean;
-}) {
-  const [data, setData] = useState<UjianType[]>([]);
-  const [loading, setLoading] = useState(true);
+};
+
+export default function TryoutExamTable({ program, accessIds, isMember = false }: TryoutExamTableProps) {
+  const { data, status, reload } = useApiData<UjianItem[]>(
+    `/api/exam?programId=${encodeURIComponent(program.id)}`,
+  );
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<ExamFilter>("all");
   const [page, setPage] = useState(1);
 
-  const perPage = 4;
+  const items = useMemo(() => data ?? [], [data]);
+  const accessSet = useMemo(() => new Set(accessIds), [accessIds]);
+  // Member otomatis punya akses ke semua ujian.
+  const hasAccess = useCallback((item: UjianItem) => isMember || accessSet.has(item.id), [isMember, accessSet]);
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/exam?programId=${programId}`);
-      const result = await res.json();
-      setData(result || []);
-    } catch (err) {
-      console.error(err);
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [programId]);
+  const counts = useMemo(() => countExams(items, hasAccess), [items, hasAccess]);
+  const filtered = useMemo(
+    () => filterExams(items, { query, filter, hasAccess }),
+    [items, query, filter, hasAccess],
+  );
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const visible = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
-  const totalPages = Math.ceil(data.length / perPage);
-  const paginated = data.slice((page - 1) * perPage, page * perPage);
+  const changeQuery = (value: string) => {
+    setQuery(value);
+    setPage(1);
+  };
+  const changeFilter = (value: ExamFilter) => {
+    setFilter(value);
+    setPage(1);
+  };
+  const resetFilters = () => {
+    setQuery("");
+    setFilter("all");
+    setPage(1);
+  };
 
   return (
-    <div className="p-4 md:p-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-5 flex-wrap">
-        <span className="text-lg font-semibold text-gray-800">Try Out</span>
-        <span className="flex items-center gap-2 text-gray-400">
-          <ChevronRight className="w-4 h-4" />
-          <Link href="/user" className="flex items-center gap-1 text-blue-600 hover:underline">
-            <Home className="w-4 h-4" />
-          </Link>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-700 font-medium">Soal</span>
-        </span>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        backHref="/user/tryout"
+        backLabel="Semua kategori"
+        title={program.name}
+        description={program.description || DEFAULT_DESCRIPTION}
+        meta={
+          status === "ready" && (
+            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+              {items.length} paket ujian
+            </span>
+          )
+        }
+      />
 
-      {/* Title */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
-            Pilih soal tryout yang akan kamu kerjakan
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Pastikan kamu sudah siap sebelum memulai pengerjaan.
-          </p>
-        </div>
-
-        {/* BADGE MEMBER */}
-        {isMember && (
-          <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm">
-            <Crown className="w-4 h-4" />
-            Member - Akses Semua Ujian
+      {isMember && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+            <Crown className="h-[18px] w-[18px]" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-amber-900">Kamu member</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-amber-800">
+              Semua paket ujian di kategori ini bisa kamu kerjakan tanpa biaya tambahan.
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {loading ? (
+      {status === "ready" && items.length > 0 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <SegmentedControl<ExamFilter>
+            label="Filter ujian"
+            value={filter}
+            onChange={changeFilter}
+            options={[
+              { value: "all", label: "Semua", count: counts.all },
+              { value: "owned", label: "Akses saya", count: counts.owned },
+              { value: "free", label: "Gratis", count: counts.free },
+              { value: "paid", label: "Berbayar", count: counts.paid },
+            ]}
+          />
+          <SearchInput
+            value={query}
+            onChange={changeQuery}
+            placeholder="Cari paket ujian..."
+            label="Cari paket ujian"
+          />
+        </div>
+      )}
+
+      {status === "loading" ? (
         <ExamCardsSkeleton />
-      ) : data.length === 0 ? (
-        <div className="bg-white border border-gray-100 rounded-2xl p-10 text-center text-gray-400">
-          Belum ada ujian tersedia
+      ) : status === "error" ? (
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <ErrorState message="Daftar ujian belum bisa dimuat." onRetry={reload} />
+        </div>
+      ) : items.length === 0 ? (
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <EmptyState
+            icon={FileText}
+            title="Belum ada ujian di kategori ini"
+            description="Paket ujian akan tampil di sini setelah ditambahkan admin."
+            action={
+              <ActionLink href="/user/tryout" variant="secondary" size="md">
+                Lihat kategori lain
+              </ActionLink>
+            }
+          />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <EmptyState
+            icon={FileSearch}
+            title="Tidak ada ujian yang cocok"
+            description="Coba kata kunci lain atau ganti filternya."
+            action={
+              <ActionButton variant="secondary" size="md" onClick={resetFilters}>
+                Reset filter
+              </ActionButton>
+            }
+          />
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-            {paginated.map((item) => {
-              // MEMBER OTOMATIS PUNYA AKSES KE SEMUA UJIAN
-              const hasAccess = isMember || accessIds.includes(item.id);
-
-              return (
-                <div
-                  key={item.id}
-                  className="bg-white border border-gray-200 rounded-md overflow-hidden shadow hover:shadow-lg transition relative"
-                >
-                  {/* BADGE MEMBER DI CARD */}
-                  {isMember && (
-                    <div className="absolute top-2 right-2 z-10 bg-yellow-400 text-white p-1.5 rounded-full shadow">
-                      <Crown className="w-3 h-3" />
-                    </div>
-                  )}
-
-                  <div className="p-3 pb-0">
-                    <Image
-                      src={item.program?.image || "/no-image.png"}
-                      alt={item.title}
-                      width={500}
-                      height={300}
-                      className="w-full h-40 object-cover rounded"
-                    />
-                  </div>
-
-                  <div className="p-4">
-                    <h2 className="font-semibold text-gray-700 text-lg mb-2">{item.title}</h2>
-                    <p className="text-sm text-gray-500 leading-relaxed min-h-[48px]">
-                      Kerjakan soal sesuai perintah yang ada dalam informasi.
-                    </p>
-
-                    <div className="flex justify-center mt-5">
-                      {isMember ? (
-                        <div className="bg-yellow-100 text-yellow-700 text-sm font-semibold px-3 py-1 rounded-full">
-                          Akses Member
-                        </div>
-                      ) : item.price === 0 ? (
-                        <div className="bg-green-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">
-                          Gratis
-                        </div>
-                      ) : (
-                        <div className="bg-red-100 text-red-700 text-sm font-semibold px-3 py-1 rounded-full">
-                          Rp {item.price.toLocaleString("id-ID")}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-5">
-                      {hasAccess ? (
-                        <Link
-                          href={`/user/tryout/ujian/${item.id}`}
-                          className="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white transition rounded-md py-2 text-sm font-medium"
-                        >
-                          Kerjakan Ujian
-                        </Link>
-                      ) : item.price === 0 ? (
-                        <FreeAccessButton
-                          ujianId={item.id}
-                          className="w-full block text-center bg-green-600 hover:bg-green-700 text-white transition rounded-md py-2 text-sm font-medium"
-                        >
-                          Ambil Akses Gratis
-                        </FreeAccessButton>
-                      ) : (
-                        <BuyButton
-                          ujianId={item.id}
-                          className="w-full block text-center border border-red-300 text-red-400 hover:bg-red-500 hover:text-white transition rounded-md py-2 text-sm font-medium"
-                        >
-                          Beli Paket Try Out
-                        </BuyButton>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {visible.map((exam) => (
+              <ExamCard key={exam.id} exam={exam} hasAccess={hasAccess(exam)} isMember={isMember} />
+            ))}
           </div>
 
-          <div className="flex justify-center items-center gap-2 mt-10">
-            <button
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-              className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition disabled:opacity-40 disabled:hover:bg-transparent"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
-            </button>
-            <span className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium">{page}</span>
-            <button
-              onClick={() => setPage(page + 1)}
-              disabled={page >= totalPages || totalPages === 0}
-              className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition disabled:opacity-40 disabled:hover:bg-transparent"
-            >
-              Next
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+          <Pagination
+            page={currentPage}
+            totalPages={totalPages}
+            total={filtered.length}
+            perPage={PER_PAGE}
+            onPageChange={setPage}
+          />
         </>
       )}
     </div>

@@ -1,78 +1,54 @@
 import { redirect } from "next/navigation";
-
+import ExamDetailPage from "@/components/dashboardUser/ujian/ExamDetailPage";
+import { hasExamAccess } from "@/libs/exam-acces";
+import { activeSessionWhere } from "@/libs/exam-session-filters";
+import { prisma } from "@/libs/prisma";
 import { auth } from "../../../../../../../../auth";
 
-import { prisma } from "@/libs/prisma";
-
-import { hasExamAccess } from "@/libs/exam-acces";
-
-import ExamDetailPage from "@/components/dashboardUser/ujian/ExamDetailPage";
-
 type Props = {
-  params: Promise<{
-    ujianId: string;
-  }>;
+  params: Promise<{ ujianId: string }>;
 };
 
-export default async function ExamPage({
-  params,
-}: Props) {
-  // PARAMS
-  const { ujianId } =
-    await params;
+export default async function ExamPage({ params }: Props) {
+  const { ujianId } = await params;
 
-  // SESSION
   const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) redirect("/login");
 
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  // USER
-  const user =
-    await prisma.user.findUnique({
-      where: {
-        id: session.user.id,
+  const [user, allowed, ujian, ongoing] = await Promise.all([
+    // Hanya nama & email yang boleh sampai ke browser. Jangan kirim seluruh baris User (ada hash password).
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    }),
+    hasExamAccess({ userId, ujianId }),
+    prisma.ujian.findUnique({
+      where: { id: ujianId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        programId: true,
+        timeType: true,
+        totalTime: true,
+        listeningTime: true,
+        structureTime: true,
+        readingTime: true,
+        maxExitAttempts: true,
+        program: { select: { name: true } },
       },
-    });
+    }),
+    // Sesi ujian ini yang masih bisa dilanjutkan (kalau ada), supaya tombolnya jadi "Lanjutkan".
+    prisma.examSession.findFirst({
+      where: { ...activeSessionWhere(userId), ujianId },
+      orderBy: { startedAt: "desc" },
+      select: { id: true },
+    }),
+  ]);
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
+  if (!allowed || !ujian) redirect("/user/tryout");
 
-  // ACCESS CHECK
-  const allowed =
-    await hasExamAccess({
-      userId: session.user.id,
-
-      ujianId,
-    });
-
-  // BLOCK
-  if (!allowed) {
-    redirect("/user/tryout");
-  }
-
-  // GET UJIAN
-  const ujian =
-    await prisma.ujian.findUnique({
-      where: {
-        id: ujianId,
-      },
-
-      include: {
-        program: true,
-      },
-    });
-
-  if (!ujian) {
-    redirect("/user/tryout");
-  }
-
-  return (
-    <ExamDetailPage
-      exam={ujian}
-      user={user}
-    />
-  );
+  return <ExamDetailPage exam={ujian} user={user} ongoingSessionId={ongoing?.id ?? null} />;
 }

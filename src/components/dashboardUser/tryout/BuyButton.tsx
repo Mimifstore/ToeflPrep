@@ -5,11 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useRouter } from "next/navigation";
-import Busy from "@/components/Ui/Busy";
+import { ShoppingCart } from "lucide-react";
+import { ActionButton } from "@/components/dashboardUser/ui/ActionButton";
 
 type Props = {
   ujianId: string;
-  className?: string;
+  size?: "sm" | "md";
+  fullWidth?: boolean;
   children?: React.ReactNode;
 };
 
@@ -20,7 +22,7 @@ const POLL_INTERVAL_MS = 2000;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export default function BuyButton({ ujianId, className, children }: Props) {
+export default function BuyButton({ ujianId, size = "md", fullWidth = false, children }: Props) {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
@@ -128,14 +130,14 @@ export default function BuyButton({ ujianId, className, children }: Props) {
   };
 
   return (
-    <button
+    <ActionButton
       onClick={handleBuy}
-      disabled={loading}
-      className={`w-full disabled:opacity-50 ${className || ""}`}
+      loading={loading}
+      icon={ShoppingCart}
+      size={size}
+      fullWidth={fullWidth}
     >
-      <Busy loading={loading} text="Memproses...">
-        {children || "Beli Paket"}
-      </Busy>
-    </button>
+      {children || "Beli Paket"}
+    </ActionButton>
   );
 }

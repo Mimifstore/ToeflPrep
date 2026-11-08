@@ -1,6 +1,7 @@
+import { notFound, redirect } from "next/navigation";
 import TryoutExamTable from "@/components/dashboardUser/tryout/TryoutExamTable";
-import { auth } from "../../../../../../../auth";
 import { prisma } from "@/libs/prisma";
+import { auth } from "../../../../../../../auth";
 
 export default async function Page({
   params,
@@ -10,25 +11,33 @@ export default async function Page({
   const { id } = await params;
 
   const session = await auth();
+  const userId = session?.user?.id;
+  // Tanpa userId, filter `{ userId: undefined }` di Prisma cocok ke SEMUA siswa. Jangan lanjut.
+  if (!userId) redirect("/login");
 
-  const accesses = await prisma.userExamAccess.findMany({
-    where: { userId: session?.user?.id },
-    select: { ujianId: true },
-  });
+  const [program, accesses, siswa] = await Promise.all([
+    prisma.program.findUnique({
+      where: { id },
+      select: { id: true, name: true, description: true },
+    }),
+    prisma.userExamAccess.findMany({
+      where: { userId },
+      select: { ujianId: true },
+    }),
+    // Status member: member otomatis punya akses ke semua ujian.
+    prisma.siswa.findUnique({
+      where: { userId },
+      select: { isMember: true },
+    }),
+  ]);
 
-  const accessIds = accesses.map((item) => item.ujianId);
-
-  // CEK STATUS MEMBER
-  const siswa = await prisma.siswa.findUnique({
-    where: { userId: session?.user?.id },
-    select: { isMember: true },
-  });
+  if (!program) notFound();
 
   return (
     <TryoutExamTable
-      programId={id}
-      accessIds={accessIds}
-      isMember={siswa?.isMember || false}
+      program={program}
+      accessIds={accesses.map((item: { ujianId: string }) => item.ujianId)}
+      isMember={siswa?.isMember ?? false}
     />
   );
 }

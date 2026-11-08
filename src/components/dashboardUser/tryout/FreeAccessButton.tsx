@@ -2,17 +2,20 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import Busy from "@/components/Ui/Busy";
+import { Gift } from "lucide-react";
+import { ActionButton } from "@/components/dashboardUser/ui/ActionButton";
 
 type Props = {
   ujianId: string;
-  className?: string;
+  size?: "sm" | "md";
+  fullWidth?: boolean;
   children?: React.ReactNode;
 };
 
 export default function FreeAccessButton({
   ujianId,
-  className,
+  size = "md",
+  fullWidth = false,
   children,
 }: Props) {
   const [loading, setLoading] = useState(false);
@@ -40,14 +43,15 @@ export default function FreeAccessButton({
   };
 
   return (
-    <button
+    <ActionButton
       onClick={handleFreeAccess}
-      disabled={loading}
-      className={`w-full disabled:opacity-50 ${className || ""}`}
+      loading={loading}
+      variant="success"
+      icon={Gift}
+      size={size}
+      fullWidth={fullWidth}
     >
-      <Busy loading={loading} text="Memproses...">
-        {children || "Mulai Gratis"}
-      </Busy>
-    </button>
+      {children || "Ambil Akses"}
+    </ActionButton>
   );
 }

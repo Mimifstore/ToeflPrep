@@ -25,6 +25,8 @@ export async function GET() {
 
   try {
     const data = await prisma.program.findMany({
+      // _count: dipakai halaman Try Out siswa untuk menampilkan jumlah paket ujian.
+      include: { _count: { select: { ujians: true } } },
       orderBy: { createdAt: "desc" },
     });
 

@@ -11,7 +11,7 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import Spinner from "@/components/Ui/Spinner";
 
-type Variant = "primary" | "warning" | "secondary";
+type Variant = "primary" | "success" | "warning" | "secondary";
 type Size = "sm" | "md";
 
 const BASE =
@@ -19,6 +19,7 @@ const BASE =
 
 const VARIANT: Record<Variant, string> = {
   primary: "bg-blue-600 text-white hover:bg-blue-700",
+  success: "bg-green-600 text-white hover:bg-green-700",
   warning: "bg-yellow-500 text-white hover:bg-yellow-600",
   secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200",
 };
@@ -37,6 +38,8 @@ type CommonProps = {
   variant?: Variant;
   size?: Size;
   icon?: LucideIcon;
+  /** Posisi icon terhadap teks. */
+  iconPosition?: "start" | "end";
   fullWidth?: boolean;
   children: ReactNode;
 };
@@ -55,12 +58,15 @@ export function ActionButton({
   variant = "primary",
   size = "sm",
   icon: Icon,
+  iconPosition = "start",
   fullWidth = false,
   loading = false,
   disabled,
   children,
   ...rest
 }: ActionButtonProps) {
+  const icon = loading ? <Spinner className={ICON_SIZE[size]} /> : Icon && <Icon className={ICON_SIZE[size]} />;
+
   return (
     <button
       type="button"
@@ -69,12 +75,9 @@ export function ActionButton({
       aria-busy={loading || undefined}
       className={classes(variant, size, fullWidth)}
     >
-      {loading ? (
-        <Spinner className={ICON_SIZE[size]} />
-      ) : (
-        Icon && <Icon className={ICON_SIZE[size]} />
-      )}
+      {iconPosition === "start" && icon}
       {children}
+      {iconPosition === "end" && icon}
     </button>
   );
 }
@@ -98,6 +101,7 @@ export function ActionLink({
   variant = "primary",
   size = "sm",
   icon: Icon,
+  iconPosition = "start",
   fullWidth = false,
   children,
 }: ActionLinkProps) {
@@ -110,13 +114,14 @@ export function ActionLink({
   }, [pending]);
 
   const className = classes(variant, size, fullWidth);
-  const icon = Icon && <Icon className={ICON_SIZE[size]} />;
+  const staticIcon = Icon && <Icon className={ICON_SIZE[size]} />;
 
   if (external) {
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
-        {icon}
+        {iconPosition === "start" && staticIcon}
         {children}
+        {iconPosition === "end" && staticIcon}
         <span className="sr-only"> (buka di tab baru)</span>
       </a>
     );
@@ -130,6 +135,8 @@ export function ActionLink({
     setPending(true);
   };
 
+  const pendingIcon = pending ? <Spinner className={ICON_SIZE[size]} /> : staticIcon;
+
   return (
     <Link
       href={href}
@@ -139,8 +146,9 @@ export function ActionLink({
       tabIndex={pending ? -1 : undefined}
       className={className}
     >
-      {pending ? <Spinner className={ICON_SIZE[size]} /> : icon}
+      {iconPosition === "start" && pendingIcon}
       {children}
+      {iconPosition === "end" && pendingIcon}
     </Link>
   );
 }
