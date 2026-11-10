@@ -14,6 +14,7 @@ import { useApiData } from "@/hooks/useApiData";
 import { countExams, filterExams, type ExamFilter } from "@/libs/exam-filter";
 import type { UjianItem } from "@/types/user-tryout";
 import ExamCard from "./ExamCard";
+import { htmlToPlainText } from "@/libs/rich-text";
 
 const PER_PAGE = 6;
 
@@ -69,7 +70,7 @@ export default function TryoutExamTable({ program, accessIds, isMember = false }
         backHref="/user/tryout"
         backLabel="Semua kategori"
         title={program.name}
-        description={program.description || DEFAULT_DESCRIPTION}
+        description={htmlToPlainText(program.description) || DEFAULT_DESCRIPTION}
         meta={
           status === "ready" && (
             <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">

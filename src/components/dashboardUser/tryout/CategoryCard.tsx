@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import ProgramCover from "@/components/dashboardUser/shared/ProgramCover";
 import { ActionLink } from "@/components/dashboardUser/ui/ActionButton";
 import type { ProgramItem } from "@/types/user-tryout";
+import { htmlToPlainText } from "@/libs/rich-text";
 
 const DEFAULT_DESCRIPTION =
   "Pelajari materi dan kerjakan try out untuk meningkatkan kemampuan serta hasil ujianmu.";
@@ -24,7 +25,7 @@ export default function CategoryCard({ program }: { program: ProgramItem }) {
       <div className="flex flex-1 flex-col p-5 pt-4">
         <h2 className="text-base font-semibold text-gray-900">{program.name}</h2>
         <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-gray-500">
-          {program.description || DEFAULT_DESCRIPTION}
+          {htmlToPlainText(program.description) || DEFAULT_DESCRIPTION}
         </p>
 
         <div className="mt-auto pt-5">

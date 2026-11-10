@@ -1,3 +1,5 @@
+import { htmlToSingleLine } from "@/libs/rich-text";
+
 export type ExamFilter = "all" | "free" | "paid" | "owned";
 
 type Filterable = {
@@ -31,7 +33,7 @@ function matchesQuery(item: Filterable, query: string) {
   const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return true;
 
-  const haystack = `${item.title} ${item.description ?? ""}`.toLowerCase();
+  const haystack = `${item.title} ${htmlToSingleLine(item.description)}`.toLowerCase();
   return tokens.every((token) => haystack.includes(token));
 }
 

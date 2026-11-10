@@ -11,6 +11,7 @@ import { formatExamDuration, getSectionTimes } from "@/libs/exam-format";
 import type { ExamDetail, ExamParticipant } from "@/types/user-tryout";
 import ExamInformation from "./ExamInformation";
 import ExamRules from "./ExamRules";
+import { htmlToPlainText } from "@/libs/rich-text";
 
 const DEFAULT_DESCRIPTION = "Baca aturan dan petunjuk dengan teliti sebelum memulai ujian.";
 
@@ -70,7 +71,7 @@ export default function ExamDetailPage({ exam, user, ongoingSessionId }: ExamDet
         backHref={`/user/tryout/${exam.programId}`}
         backLabel={`Kembali ke ${exam.program.name}`}
         title={exam.title}
-        description={exam.description || DEFAULT_DESCRIPTION}
+        description={htmlToPlainText(exam.description) || DEFAULT_DESCRIPTION}
         meta={<CategoryBadge name={exam.program.name} />}
       />
 

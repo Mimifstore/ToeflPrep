@@ -8,6 +8,7 @@ import { formatRupiah } from "@/libs/admin-search-utils";
 import type { UjianItem } from "@/types/user-tryout";
 import BuyButton from "./BuyButton";
 import FreeAccessButton from "./FreeAccessButton";
+import { htmlToPlainText } from "@/libs/rich-text";
 
 const DEFAULT_DESCRIPTION = "Kerjakan soal sesuai petunjuk yang tersedia di halaman ujian.";
 
@@ -94,7 +95,7 @@ export default function ExamCard({ exam, hasAccess, isMember }: ExamCardProps) {
       <h2 className="mt-4 line-clamp-2 text-base font-semibold leading-snug text-gray-900">{exam.title}</h2>
       {/* min-h = tepat 2 baris (2 x 1.625 x 0.875rem), supaya baris durasi sejajar di semua kartu */}
       <p className="mt-1.5 line-clamp-2 min-h-[2.85rem] text-sm leading-relaxed text-gray-500">
-        {exam.description || DEFAULT_DESCRIPTION}
+        {htmlToPlainText(exam.description) || DEFAULT_DESCRIPTION}
       </p>
 
       <div className="mt-3 flex items-center gap-1.5 text-xs text-gray-500">

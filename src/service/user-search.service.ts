@@ -5,6 +5,7 @@ import {
   normalizeQuery,
   stripHtml,
 } from "@/libs/admin-search-utils";
+import { htmlToSingleLine } from "@/libs/rich-text";
 import { formatDateWIB } from "@/libs/user-search-utils";
 import {
   USER_SEARCH_MIN_LENGTH,
@@ -14,6 +15,16 @@ import {
 
 /** Maksimal hasil per jenis data. */
 const PER_TYPE = 5;
+
+/**
+ * Deskripsi, isi pengumuman, dan jawaban FAQ tersimpan sebagai HTML dari editor, dan database mencocokkan
+ * HTML mentahnya (jadi "li", "strong", atau "ql" ikut cocok dengan nama tag/class). Karena itu data diambil
+ * lebih banyak, lalu disaring ulang di teks biasa dan dipotong ke PER_TYPE.
+ */
+const OVERFETCH = 4;
+
+const hasText = (value: string | null | undefined, query: string) =>
+  htmlToSingleLine(value).toLowerCase().includes(query.toLowerCase());
 
 const contains = (query: string) => ({
   contains: query,
@@ -41,6 +52,7 @@ type ProgramRow = { id: string; name: string; description: string | null };
 type UjianRow = {
   id: string;
   title: string;
+  description: string | null;
   price: number;
   programId: string;
   program: { name: string };
@@ -72,10 +84,12 @@ async function searchPrograms(q: string): Promise<UserSearchItem[]> {
     where: { OR: [{ name: contains(q) }, { description: contains(q) }] },
     select: { id: true, name: true, description: true },
     orderBy: { createdAt: "desc" },
-    take: PER_TYPE,
+    take: PER_TYPE * OVERFETCH,
   });
 
-  return rows.map((p: ProgramRow) => ({
+  const matches = rows.filter((p) => hasText(p.name, q) || hasText(p.description, q));
+
+  return matches.slice(0, PER_TYPE).map((p: ProgramRow) => ({
     type: "program",
     id: p.id,
     title: p.name,
@@ -90,27 +104,29 @@ async function searchUjian(q: string, userId: string): Promise<UserSearchItem[]>
     select: {
       id: true,
       title: true,
+      description: true,
       price: true,
       programId: true,
       program: { select: { name: true } },
     },
     orderBy: { createdAt: "desc" },
-    take: PER_TYPE,
+    take: PER_TYPE * OVERFETCH,
   });
-  if (rows.length === 0) return [];
+  const matches = rows.filter((u) => hasText(u.title, q) || hasText(u.description, q)).slice(0, PER_TYPE);
+  if (matches.length === 0) return [];
 
   // Aturan akses sama dengan hasExamAccess: member punya akses ke semua ujian,
   // selain itu harus ada UserExamAccess. Dicek sekaligus biar nggak 1 query per hasil.
   const [siswa, accesses] = await Promise.all([
     prisma.siswa.findUnique({ where: { userId }, select: { isMember: true } }),
     prisma.userExamAccess.findMany({
-      where: { userId, ujianId: { in: rows.map((u: UjianRow) => u.id) } },
+      where: { userId, ujianId: { in: matches.map((u: UjianRow) => u.id) } },
       select: { ujianId: true },
     }),
   ]);
   const grantedIds = new Set(accesses.map((a: { ujianId: string }) => a.ujianId));
 
-  return rows.map((u: UjianRow) => {
+  return matches.map((u: UjianRow) => {
     const hasAccess = Boolean(siswa?.isMember) || grantedIds.has(u.id);
     return {
       type: "ujian",
@@ -202,10 +218,12 @@ async function searchAnnouncements(q: string): Promise<UserSearchItem[]> {
     where: { OR: [{ title: contains(q) }, { content: contains(q) }] },
     select: { id: true, title: true, content: true },
     orderBy: { createdAt: "desc" },
-    take: PER_TYPE,
+    take: PER_TYPE * OVERFETCH,
   });
 
-  return rows.map((a: AnnouncementRow) => ({
+  const matches = rows.filter((a) => hasText(a.title, q) || hasText(a.content, q));
+
+  return matches.slice(0, PER_TYPE).map((a: AnnouncementRow) => ({
     type: "pengumuman",
     id: a.id,
     title: a.title,
@@ -223,10 +241,14 @@ async function searchFaqs(q: string): Promise<UserSearchItem[]> {
     },
     select: { id: true, question: true, answer: true, category: true },
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    take: PER_TYPE,
+    take: PER_TYPE * OVERFETCH,
   });
 
-  return rows.map((f: FaqRow) => {
+  const matches = rows.filter(
+    (f) => hasText(f.question, q) || hasText(f.answer, q) || hasText(f.category, q),
+  );
+
+  return matches.slice(0, PER_TYPE).map((f: FaqRow) => {
     const answer = stripHtml(f.answer);
     const inAnswer = answer.toLowerCase().includes(q.toLowerCase());
 

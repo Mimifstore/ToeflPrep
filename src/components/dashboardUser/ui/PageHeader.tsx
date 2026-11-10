@@ -37,7 +37,7 @@ export default function PageHeader({
         )}
         <h1 className="text-xl font-semibold tracking-tight text-gray-900 md:text-2xl">{title}</h1>
         {description && (
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-gray-500">{description}</p>
+          <p className="mt-1.5 max-w-2xl whitespace-pre-line text-sm leading-relaxed text-gray-500">{description}</p>
         )}
         {meta && <div className="mt-3 flex flex-wrap items-center gap-2">{meta}</div>}
       </div>
